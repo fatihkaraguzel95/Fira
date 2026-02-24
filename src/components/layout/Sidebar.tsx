@@ -115,18 +115,24 @@ export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJo
       </div>
 
       {/* Bottom actions */}
-      <div className="border-t border-gray-100 p-3 space-y-1">
+      <div className="border-t border-gray-100 p-3 space-y-2">
         <button
           onClick={onCreateTeam}
-          className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm"
         >
-          <span className="text-gray-400">+</span> Takım Oluştur
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+          Takım Oluştur
         </button>
         <button
           onClick={onJoinTeam}
-          className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 hover:border-purple-300 active:bg-purple-200 transition-colors"
         >
-          <span className="text-gray-400">→</span> Koda Göre Katıl
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+          Koda Göre Katıl
         </button>
       </div>
     </aside>

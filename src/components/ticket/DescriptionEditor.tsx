@@ -30,14 +30,17 @@ async function uploadPastedImage(file: File, ticketId: string): Promise<string> 
 export function DescriptionEditor({ value, onChange, onBlur, placeholder, ticketId, readOnly, onClick }: Props) {
   const [uploading, setUploading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Keep a ref to always-current value to avoid stale closure in async handlers
+  const valueRef = useRef(value)
+  valueRef.current = value
 
   const insertAtCursor = (text: string) => {
     const el = textareaRef.current
     if (!el) return
     const start = el.selectionStart
     const end = el.selectionEnd
-    const before = value.substring(0, start)
-    const after = value.substring(end)
+    const before = valueRef.current.substring(0, start)
+    const after = valueRef.current.substring(end)
     const newVal = before + text + after
     onChange(newVal)
     // Restore cursor position after React re-render
@@ -61,10 +64,10 @@ export function DescriptionEditor({ value, onChange, onBlur, placeholder, ticket
     insertAtCursor('\n![Yükleniyor...]()\n')
     try {
       const url = await uploadPastedImage(file, ticketId)
-      // Replace the placeholder
-      onChange(value.replace('![Yükleniyor...]()', `![resim](${url})`))
+      // Use valueRef.current so we replace in the latest state (not stale closure)
+      onChange(valueRef.current.replace('![Yükleniyor...]()', `![resim](${url})`))
     } catch {
-      onChange(value.replace('![Yükleniyor...]()', ''))
+      onChange(valueRef.current.replace('![Yükleniyor...]()', ''))
     } finally {
       setUploading(false)
     }
