@@ -46,7 +46,7 @@ export function useCreateStatus() {
 export function useUpdateStatus() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, projectId, name, color }: { id: string; projectId: string; name?: string; color?: string }): Promise<TicketStatus> => {
+    mutationFn: async ({ id, name, color }: { id: string; projectId: string; name?: string; color?: string }): Promise<TicketStatus> => {
       const { data, error } = await supabase
         .from('ticket_statuses')
         .update({ name, color })

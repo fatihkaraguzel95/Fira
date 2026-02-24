@@ -53,12 +53,10 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 
 function SortableStatusRow({
   status,
-  projectId,
   onUpdate,
   onDelete,
 }: {
   status: TicketStatus
-  projectId: string
   onUpdate: (id: string, name?: string, color?: string) => void
   onDelete: (id: string) => void
 }) {
@@ -173,7 +171,6 @@ export function StatusManager({ projectId }: Props) {
             <SortableStatusRow
               key={s.id}
               status={s}
-              projectId={projectId}
               onUpdate={(id, name, color) => updateStatus.mutate({ id, projectId, name, color })}
               onDelete={(id) => deleteStatus.mutate({ id, projectId })}
             />

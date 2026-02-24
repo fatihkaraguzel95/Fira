@@ -14,7 +14,7 @@ export function useMyTeams() {
         .select('team:teams(*)')
         .eq('user_id', user.id)
       if (error) throw error
-      return (data ?? []).map((r: { team: Team }) => r.team).filter(Boolean)
+      return (data ?? []).map((r) => (r as unknown as { team: Team }).team).filter(Boolean)
     },
   })
 }
