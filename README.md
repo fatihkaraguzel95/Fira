@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Fira — Ticket Yönetim Sistemi
 
 Jira/Linear benzeri, Supabase destekli modern bir ticket yönetim sistemi.
@@ -61,3 +62,7 @@ npm run dev
 - @dnd-kit (drag-and-drop)
 - TanStack Query v5
 - React Router v6
+=======
+# Fira
+Ticket Sistemi
+>>>>>>> 5423822678c9334b709d5c8d1da86180711ea8c0

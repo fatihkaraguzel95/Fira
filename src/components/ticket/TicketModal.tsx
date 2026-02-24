@@ -10,6 +10,7 @@ import { AttachmentUpload } from './AttachmentUpload'
 import { CommentSection } from './CommentSection'
 import { TagSelector } from './TagSelector'
 import { MultiAssigneeSelector } from './MultiAssigneeSelector'
+import { DescriptionEditor } from './DescriptionEditor'
 
 interface Props {
   projectId: string | null
@@ -30,7 +31,6 @@ export function TicketModal({ projectId }: Props) {
   const [descValue, setDescValue] = useState('')
   const [showAssignees, setShowAssignees] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
-  const descRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (ticket) {
@@ -41,8 +41,7 @@ export function TicketModal({ projectId }: Props) {
 
   useEffect(() => {
     if (editTitle) titleRef.current?.focus()
-    if (editDesc) descRef.current?.focus()
-  }, [editTitle, editDesc])
+  }, [editTitle])
 
   const close = () => navigate(-1)
 
@@ -137,25 +136,27 @@ export function TicketModal({ projectId }: Props) {
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Açıklama</h4>
                 {editDesc && canEdit ? (
-                  <textarea
-                    ref={descRef}
+                  <DescriptionEditor
                     value={descValue}
-                    onChange={(e) => setDescValue(e.target.value)}
+                    onChange={setDescValue}
                     onBlur={() => {
                       setEditDesc(false)
                       if (descValue !== (ticket.description ?? ''))
                         handleUpdate({ description: descValue || null })
                     }}
-                    rows={5}
-                    className="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    ticketId={ticket.id}
                   />
                 ) : (
-                  <div
-                    onClick={() => canEdit && setEditDesc(true)}
-                    className={`text-sm text-gray-600 min-h-[60px] rounded-lg px-3 py-2 ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''} ${!ticket.description ? 'text-gray-300 italic' : ''}`}
-                  >
-                    {ticket.description || (canEdit ? 'Açıklama eklemek için tıklayın...' : 'Açıklama yok')}
-                  </div>
+                  <DescriptionEditor
+                    value={ticket.description ?? ''}
+                    onChange={() => {}}
+                    ticketId={ticket.id}
+                    readOnly
+                    placeholder={canEdit ? 'Açıklama eklemek için tıklayın...' : 'Açıklama yok'}
+                    onClick={() => {
+                      if (canEdit) { setDescValue(ticket.description ?? ''); setEditDesc(true) }
+                    }}
+                  />
                 )}
               </div>
 

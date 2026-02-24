@@ -4,10 +4,14 @@ import {
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
-  PointerSensor,
-  closestCorners,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { useEffect, useRef, useState } from 'react'
@@ -22,51 +26,64 @@ interface Props {
 }
 
 export function KanbanBoard({ tickets, statuses }: Props) {
-  // Map: statusId → sorted tickets
   const [columns, setColumns] = useState<Map<string, Ticket[]>>(new Map())
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const isDragging = useRef(false)
+  // Always-current ref to avoid stale closures in event handlers
+  const columnsRef = useRef<Map<string, Ticket[]>>(new Map())
+  columnsRef.current = columns
+
   const reorder = useReorderTickets()
 
-  // Sync columns from props (only when not dragging)
+  // Sync columns from server when not dragging
   useEffect(() => {
     if (isDragging.current) return
-    const cols = new Map<string, Ticket[]>()
+    const map = new Map<string, Ticket[]>()
     statuses.forEach((s) => {
-      cols.set(
+      map.set(
         s.id,
         tickets
           .filter((t) => t.status_id === s.id)
-          .sort((a, b) => a.order_index - b.order_index)
+          .sort((a, b) => a.order_index - b.order_index),
       )
     })
-    setColumns(cols)
+    setColumns(map)
   }, [tickets, statuses])
 
-  // Find which column a ticket or column id belongs to
-  const findColumnId = (id: string): string | null => {
-    if (columns.has(id)) return id
-    for (const [colId, items] of columns.entries()) {
+  // Find which column a given id belongs to (uses ref = always fresh)
+  const findColId = (id: string): string | null => {
+    if (columnsRef.current.has(id)) return id
+    for (const [colId, items] of columnsRef.current.entries()) {
       if (items.some((t) => t.id === id)) return colId
     }
     return null
   }
 
+  // Custom collision: pointer-within first, then rect intersection
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointer = pointerWithin(args)
+    if (pointer.length > 0) return pointer
+    return rectIntersection(args)
+  }
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor),
   )
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     isDragging.current = true
-    const ticket = [...columns.values()].flat().find((t) => t.id === active.id)
+    const ticket = [...columnsRef.current.values()].flat().find((t) => t.id === active.id)
     setActiveTicket(ticket ?? null)
   }
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
     if (!over || active.id === over.id) return
 
-    const fromId = findColumnId(active.id as string)
-    const toId = findColumnId(over.id as string)
+    const fromId = findColId(active.id as string)
+    const toId = findColId(over.id as string)
+
     if (!fromId || !toId || fromId === toId) return
 
     setColumns((prev) => {
@@ -93,16 +110,18 @@ export function KanbanBoard({ tickets, statuses }: Props) {
 
     if (!over) return
 
-    const fromId = findColumnId(active.id as string)
-    const toId = findColumnId(over.id as string)
+    const fromId = findColId(active.id as string)
+    const toId = findColId(over.id as string)
+
     if (!fromId) return
 
     // Same-column reorder
     if (fromId === toId) {
-      const col = [...(columns.get(fromId) ?? [])]
+      const col = [...(columnsRef.current.get(fromId) ?? [])]
       const oldIdx = col.findIndex((t) => t.id === active.id)
       const newIdx = col.findIndex((t) => t.id === over.id)
-      if (oldIdx === -1 || oldIdx === newIdx) return
+
+      if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return
 
       const reordered = arrayMove(col, oldIdx, newIdx)
       setColumns((prev) => new Map(prev).set(fromId, reordered))
@@ -110,25 +129,29 @@ export function KanbanBoard({ tickets, statuses }: Props) {
       return
     }
 
-    // Cross-column: persist the current visual state
+    // Cross-column drop: persist full visual state
     const updates: { id: string; status_id: string; order_index: number }[] = []
-    columns.forEach((items, statusId) => {
+    columnsRef.current.forEach((items, statusId) => {
       items.forEach((ticket, i) => {
-        if (ticket.status_id !== statusId || ticket.order_index !== i) {
-          updates.push({ id: ticket.id, status_id: statusId, order_index: i })
-        }
+        updates.push({ id: ticket.id, status_id: statusId, order_index: i })
       })
     })
     if (updates.length > 0) reorder.mutate(updates)
   }
 
+  const handleDragCancel = () => {
+    isDragging.current = false
+    setActiveTicket(null)
+  }
+
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="flex gap-4 h-full pb-4 overflow-x-auto scrollbar-thin">
         {statuses.map((status) => (
@@ -140,9 +163,9 @@ export function KanbanBoard({ tickets, statuses }: Props) {
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
         {activeTicket && (
-          <div className="rotate-1 shadow-xl opacity-90">
+          <div className="rotate-1 shadow-2xl">
             <TicketCard ticket={activeTicket} />
           </div>
         )}
