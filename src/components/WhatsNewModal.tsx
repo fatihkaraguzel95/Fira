@@ -25,12 +25,56 @@ const features = [
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    ),
+    color: 'bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400',
+    title: 'Açıklamada Metin Biçimlendirme',
+    desc: 'Açıklama düzenleyicisinde Kalın (Ctrl+B), İtalik (Ctrl+I) ve Kod biçimlendirme kullanabilirsin.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
     color: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
-    title: 'Alt Görevler (Subtasks)',
-    desc: 'Her ticket altında alt görevler oluşturabilir, tamamlandıkça işaretleyebilirsin.',
+    title: 'Alt Görev Detay Ekranı',
+    desc: 'Alt görevlere tıklayarak tam detay ekranı açılır. Açıklama, öncelik (bayrak) ve bitiş tarihi ekleyebilirsin.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+      </svg>
+    ),
+    color: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+    title: 'Bayrak ile Öncelik Gösterimi',
+    desc: 'Öncelik seçimi artık renkli bayrak ikonlarıyla yapılıyor. Kanban kartlarında da yalnızca bayrak ve bitiş tarihi gösterilir.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M12 4v16m8-8H4" />
+      </svg>
+    ),
+    color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
+    title: 'Kanban\'da Durum Ekleme',
+    desc: 'Kanban tahtasında sağ taraftaki "+ Durum Ekle" alanıyla yeni durumlar ekleyebilirsin. Durumlar sürükle-bırak ile sıralanabilir.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400',
+    title: 'Takım Silme',
+    desc: 'Artık takımları silebilirsin. Güvenlik için onaylama ekranında "eminim" yazman ve takım adını girmen gerekir.',
   },
   {
     icon: (
@@ -52,7 +96,7 @@ const features = [
     ),
     color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-400',
     title: 'Hızlı Ticket Oluşturma',
-    desc: 'Yeni ticket oluştururken artık tüm detayları anında düzenleyebileceğin tam ekran açılıyor.',
+    desc: 'Yeni ticket oluştururken tüm detayları anında düzenleyebileceğin tam ekran açılıyor.',
   },
 ]
 
@@ -61,10 +105,6 @@ interface Props {
 }
 
 export function WhatsNewModal({ onClose }: Props) {
-  const handleClose = () => {
-    onClose()
-  }
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
@@ -84,7 +124,7 @@ export function WhatsNewModal({ onClose }: Props) {
               </p>
             </div>
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg leading-none flex-shrink-0 mt-1"
             >
               ✕
@@ -93,7 +133,7 @@ export function WhatsNewModal({ onClose }: Props) {
         </div>
 
         {/* Feature list */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 scrollbar-thin">
           {features.map((f, i) => (
             <div
               key={i}
@@ -113,7 +153,7 @@ export function WhatsNewModal({ onClose }: Props) {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
           <button
-            onClick={handleClose}
+            onClick={onClose}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm py-2.5 rounded-xl transition-colors"
           >
             Anladım, başlayalım
@@ -123,4 +163,3 @@ export function WhatsNewModal({ onClose }: Props) {
     </div>
   )
 }
-

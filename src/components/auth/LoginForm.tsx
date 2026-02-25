@@ -10,6 +10,14 @@ export function LoginForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const translateError = (msg: string): string => {
+    if (msg.includes('Invalid login credentials')) return 'E-posta veya şifre hatalı.'
+    if (msg.includes('Email not confirmed')) return 'E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzu kontrol edin ve doğrulama linkine tıklayın.'
+    if (msg.includes('Too many requests')) return 'Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyin.'
+    if (msg.includes('User not found')) return 'Bu e-posta ile kayıtlı hesap bulunamadı.'
+    return msg
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -17,7 +25,8 @@ export function LoginForm() {
     try {
       await signIn(email, password)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Giriş başarısız')
+      const msg = err instanceof Error ? err.message : 'Giriş başarısız'
+      setError(translateError(msg))
     } finally {
       setLoading(false)
     }

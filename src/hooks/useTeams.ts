@@ -2,6 +2,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Team, TeamMember, TeamInvitation } from '../types'
 
+// ─── Check if current user is team owner for a project ────────────────────────
+export function useIsTeamOwner(projectId: string | null) {
+  return useQuery({
+    queryKey: ['team-owner', projectId],
+    queryFn: async (): Promise<boolean> => {
+      if (!projectId) return false
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return false
+      const { data: project } = await supabase
+        .from('projects')
+        .select('team_id')
+        .eq('id', projectId)
+        .single()
+      if (!project?.team_id) return false
+      const { data: member } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', project.team_id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      return member?.role === 'owner'
+    },
+    enabled: !!projectId,
+  })
+}
+
 // ─── Fetch my teams ───────────────────────────────────────────────────────────
 export function useMyTeams() {
   return useQuery({
@@ -32,6 +58,18 @@ export function useTeamMembers(teamId: string) {
       return (data ?? []) as TeamMember[]
     },
     enabled: !!teamId,
+  })
+}
+
+// ─── Delete team ──────────────────────────────────────────────────────────────
+export function useDeleteTeam() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      const { error } = await supabase.from('teams').delete().eq('id', teamId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['teams'] }),
   })
 }
 

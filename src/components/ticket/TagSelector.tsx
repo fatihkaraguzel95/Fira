@@ -41,7 +41,6 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
 
   return (
     <div className="relative">
-      {/* Assigned tags + open button */}
       <div className="flex flex-wrap gap-1 items-center">
         {assignedTags.map((tag) => (
           <span
@@ -61,7 +60,6 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
         </button>
       </div>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-56">
           <p className="text-xs font-medium text-gray-500 mb-2">Tag Seç</p>

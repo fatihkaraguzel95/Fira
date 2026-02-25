@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(cd \"C:\\\\Users\\\\MFK\\\\Desktop\\\\Workspace\\\\Fira\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\MFK\\\\Desktop\\\\Workspace\\\\Fira\" && npx supabase --version 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\MFK\\\\Desktop\\\\Workspace\\\\Fira\" && ls -la .env* 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\MFK\\\\Desktop\\\\Workspace\\\\Fira\" && npx supabase db push 2>&1)",
+      "Bash(cd:*)",
+      "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && npx tsc --noEmit 2>&1)",
+      "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && npx supabase db push 2>&1)",
+      "Bash(echo OK:*)"
+    ]
+  }
+}

@@ -1,5 +1,13 @@
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Markdown } from 'tiptap-markdown'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { supabase } from '../../lib/supabase'
 
 interface Props {
@@ -25,61 +33,12 @@ async function uploadPastedImage(file: File, ticketId: string): Promise<string> 
   return publicUrl
 }
 
-// ─── Markdown ↔ HTML conversions ─────────────────────────────────────────────
-const IMG_STYLE =
-  'max-height:200px;max-width:100%;border-radius:8px;border:1px solid rgba(128,128,128,0.25);object-fit:contain;margin:2px 2px;display:inline-block;vertical-align:middle;cursor:zoom-in;'
-
-function markdownToHtml(md: string): string {
-  if (!md) return ''
-  return md
-    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, `<img src="$2" alt="$1" style="${IMG_STYLE}" />`)
-    .split('\n')
-    .map((line) => (line === '' ? '<br>' : line))
-    .join('<br>')
-}
-
-function htmlToMarkdown(el: HTMLDivElement): string {
-  const parts: string[] = []
-
-  function walk(node: Node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      parts.push(node.textContent ?? '')
-      return
-    }
-    if (node.nodeType !== Node.ELEMENT_NODE) return
-    const elem = node as HTMLElement
-    const tag = elem.tagName.toLowerCase()
-
-    if (tag === 'img') {
-      const src = elem.getAttribute('src') ?? ''
-      const alt = elem.getAttribute('alt') ?? 'resim'
-      parts.push(`![${alt}](${src})`)
-      return
-    }
-    if (tag === 'br') {
-      parts.push('\n')
-      return
-    }
-    if (tag === 'div' || tag === 'p') {
-      if (parts.length && !parts[parts.length - 1].endsWith('\n')) parts.push('\n')
-      elem.childNodes.forEach(walk)
-      if (parts.length && !parts[parts.length - 1].endsWith('\n')) parts.push('\n')
-      return
-    }
-    elem.childNodes.forEach(walk)
-  }
-
-  el.childNodes.forEach(walk)
-  return parts.join('').replace(/\n{3,}/g, '\n\n').trim()
-}
-
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-6"
       onClick={onClose}
-      onMouseDown={(e) => e.preventDefault()}
     >
       <button
         onClick={onClose}
@@ -97,17 +56,24 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
   )
 }
 
-// ─── Insert node at current caret ─────────────────────────────────────────────
-function insertNodeAtCursor(node: Node) {
-  const sel = window.getSelection()
-  if (!sel?.rangeCount) return
-  const range = sel.getRangeAt(0)
-  range.deleteContents()
-  range.insertNode(node)
-  range.setStartAfter(node)
-  range.setEndAfter(node)
-  sel.removeAllRanges()
-  sel.addRange(range)
+// ─── Toolbar Button ────────────────────────────────────────────────────────────
+function ToolbarBtn({
+  label, title, active, onMouseDown,
+}: { label: React.ReactNode; title: string; active?: boolean; onMouseDown: (e: React.MouseEvent) => void }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={onMouseDown}
+      className={`min-w-[28px] h-7 px-1.5 flex items-center justify-center rounded text-xs font-bold transition-colors select-none ${
+        active
+          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+      }`}
+    >
+      {label}
+    </button>
+  )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -119,144 +85,111 @@ export function DescriptionEditor({
   ticketId,
   readOnly,
   onClick,
-  minHeight = '140px',
+  minHeight = '160px',
 }: Props) {
-  const editorRef = useRef<HTMLDivElement>(null)
-
-  // lightbox is the ONLY React state — no state for empty/content (avoids re-renders that reset contenteditable)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const uploading = useRef(false)
+  const pendingBlur = useRef(false)
 
-  // Refs for async paste stability
-  const isPasting = useRef(false)   // blocks onInput during paste
-  const isUploading = useRef(false) // blocks onBlur during upload
-  const pendingBlur = useRef(false) // deferred blur request
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: { HTMLAttributes: { class: 'list-disc pl-5' } },
+        orderedList: { HTMLAttributes: { class: 'list-decimal pl-5' } },
+      }),
+      Image.configure({ inline: false, allowBase64: false }),
+      TaskList.configure({ HTMLAttributes: { class: 'tiptap-task-list not-prose pl-0' } }),
+      TaskItem.configure({ nested: true, HTMLAttributes: { class: 'tiptap-task-item' } }),
+      Placeholder.configure({ placeholder: placeholder ?? 'Açıklama yazın…' }),
+      Markdown.configure({
+        html: false,
+        transformCopiedText: true,
+        transformPastedText: true,
+      }),
+    ],
+    content: value,
+    editable: true,
+    onUpdate({ editor }) {
+      const md = editor.storage.markdown.getMarkdown()
+      onChange(md)
+    },
+    onBlur() {
+      if (uploading.current) { pendingBlur.current = true; return }
+      onBlur?.()
+    },
+    editorProps: {
+      handlePaste(view, event) {
+        const items = Array.from(event.clipboardData?.items ?? [])
+        const imageItem = items.find(i => i.type.startsWith('image/'))
+        if (!imageItem) return false
+        event.preventDefault()
+        const file = imageItem.getAsFile()
+        if (!file || uploading.current) return true
+        uploading.current = true
+        uploadPastedImage(file, ticketId)
+          .then(url => {
+            const { state } = view
+            const node = state.schema.nodes.image.create({ src: url, alt: 'resim' })
+            const tr = state.tr.replaceSelectionWith(node)
+            view.dispatch(tr)
+          })
+          .catch(() => {})
+          .finally(() => {
+            uploading.current = false
+            if (pendingBlur.current) {
+              pendingBlur.current = false
+              onBlur?.()
+            }
+          })
+        return true
+      },
+    },
+  })
 
-  // Always-fresh ref so useLayoutEffect never reads a stale closure value
-  const initValueRef = useRef(value)
-  initValueRef.current = value
-
-  // ── Init: on mount and when ticketId changes (parent uses key-based remount on mode switch) ──
-  useLayoutEffect(() => {
-    const el = editorRef.current
-    if (!el) return
-    el.innerHTML = markdownToHtml(initValueRef.current)
-    el.dataset.empty = initValueRef.current ? 'false' : 'true'
-  }, [ticketId]) // re-run only on ticket change; mode switch is handled by key remount in parent
-
-  // ── Sync DOM → markdown: updates data-empty via DOM, NOT via setState ──
-  const syncMarkdown = () => {
-    const el = editorRef.current
-    if (!el) return
-    const md = htmlToMarkdown(el)
-    el.dataset.empty = md ? 'false' : 'true'
-    onChange(md)
-  }
-
-  // ── onInput: fired by user typing ──
-  const handleInput = () => {
-    if (isPasting.current) return
-    syncMarkdown()
-  }
-
-  // ── onBlur: defer if upload is in progress ──
-  const handleBlur = () => {
-    if (isUploading.current) {
-      pendingBlur.current = true
-      return
+  // Sync when a different ticket is opened (key-based reset is preferred, but handle value drift too)
+  useEffect(() => {
+    if (!editor) return
+    const current = editor.storage.markdown.getMarkdown()
+    if (current !== value) {
+      editor.commands.setContent(value, false)
     }
-    onBlur?.()
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor])
 
-  // ── Paste: handle images, let text paste through normally ──
-  const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
-    const imageItem = Array.from(e.clipboardData.items).find((i) =>
-      i.type.startsWith('image/')
-    )
-    if (!imageItem) return // normal text paste — let browser handle it
-
-    e.preventDefault()
-    const file = imageItem.getAsFile()
-    if (!file || isUploading.current) return
-
-    isPasting.current = true
-    isUploading.current = true
-
-    // Capture element ref before async (component might unmount)
-    const editorEl = editorRef.current
-
-    // Insert loading placeholder at cursor
-    const loadingEl = document.createElement('span')
-    loadingEl.textContent = ' [yükleniyor…] '
-    loadingEl.style.cssText = 'color:#3b82f6;font-size:13px;font-style:italic;'
-    loadingEl.dataset.loading = 'true'
-    insertNodeAtCursor(loadingEl)
-
-    try {
-      const url = await uploadPastedImage(file, ticketId)
-
-      const img = document.createElement('img')
-      img.src = url
-      img.alt = 'resim'
-      img.style.cssText = IMG_STYLE
-
-      const ph = editorEl?.querySelector('[data-loading="true"]')
-      if (ph) ph.replaceWith(img)
-
-      if (editorRef.current) {
-        syncMarkdown()
-      } else if (editorEl) {
-        onChange(htmlToMarkdown(editorEl))
-      }
-    } catch {
-      editorEl?.querySelector('[data-loading="true"]')?.remove()
-      if (editorRef.current) syncMarkdown()
-    } finally {
-      isPasting.current = false
-      isUploading.current = false
-      if (pendingBlur.current) {
-        pendingBlur.current = false
-        onBlur?.()
-      }
-    }
-  }
-
-  // ── Image click → lightbox ──
-  const handleImgClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement
-    if (target.tagName === 'IMG') {
-      e.preventDefault()
-      setLightbox((target as HTMLImageElement).src)
-    }
-  }
-
-  // ── ReadOnly mode ─────────────────────────────────────────────────────────
+  // ── ReadOnly mode ────────────────────────────────────────────────────────────
   if (readOnly) {
     return (
       <>
         <div
           onClick={onClick}
-          className={`text-sm text-gray-700 dark:text-gray-300 min-h-[60px] rounded-lg px-3 py-2 leading-relaxed
-            ${onClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''}
-            ${!value ? 'text-gray-400 dark:text-gray-500 italic' : ''}`}
+          style={{ minHeight }}
+          className={[
+            'text-sm rounded-lg px-3 py-2.5 leading-relaxed',
+            onClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors' : '',
+            !value ? 'text-gray-400 dark:text-gray-500 italic' : 'text-gray-800 dark:text-gray-200',
+          ].join(' ')}
         >
           {value ? (
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-p:leading-relaxed prose-pre:bg-gray-100 prose-pre:dark:bg-gray-800">
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   img: ({ src, alt }) => (
                     <img
                       src={src}
                       alt={alt}
-                      className="max-h-48 max-w-full rounded-lg my-1 object-contain cursor-zoom-in hover:opacity-90 inline-block align-middle"
-                      style={{ border: '1px solid rgba(128,128,128,0.25)' }}
+                      className="max-h-52 max-w-full rounded-lg my-1 object-contain cursor-zoom-in hover:opacity-90 inline-block align-middle border border-gray-200 dark:border-gray-700"
                       onClick={(e) => { e.stopPropagation(); if (src) setLightbox(src) }}
                     />
                   ),
-                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                  p: ({ children }) => <p className="mb-1.5 last:mb-0 leading-relaxed">{children}</p>,
                   a: ({ href, children }) => (
                     <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                       {children}
                     </a>
+                  ),
+                  input: ({ checked }) => (
+                    <input type="checkbox" checked={checked} readOnly className="mr-1.5 accent-blue-500" />
                   ),
                 }}
               >
@@ -272,25 +205,70 @@ export function DescriptionEditor({
     )
   }
 
-  // ── Edit mode ─────────────────────────────────────────────────────────────
+  // ── Edit mode (TipTap) ────────────────────────────────────────────────────────
   return (
     <>
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        data-empty={value ? 'false' : 'true'}
-        data-placeholder={placeholder ?? 'Açıklama yazın… (Ctrl+V ile ekran görüntüsü ekleyebilirsiniz)'}
-        onInput={handleInput}
-        onPaste={handlePaste}
-        onBlur={handleBlur}
-        onClick={handleImgClick}
-        className="w-full border border-blue-300 dark:border-blue-800 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 overflow-auto text-gray-900 dark:text-gray-100"
-        style={{ minHeight, lineHeight: '1.7', wordBreak: 'break-word', backgroundColor: 'inherit' }}
-      />
-      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-        Ctrl+V ile ekran görüntüsü · Resimlere tıklayarak büyütebilirsiniz
-      </p>
+      <div className="border border-blue-300 dark:border-blue-700 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
+        {/* Toolbar */}
+        <div className="flex items-center gap-0.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 flex-wrap">
+          <ToolbarBtn
+            label={<strong>B</strong>}
+            title="Kalın (Ctrl+B)"
+            active={editor?.isActive('bold')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBold().run() }}
+          />
+          <ToolbarBtn
+            label={<em>I</em>}
+            title="İtalik (Ctrl+I)"
+            active={editor?.isActive('italic')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleItalic().run() }}
+          />
+          <ToolbarBtn
+            label={<s>S</s>}
+            title="Üstü çizili"
+            active={editor?.isActive('strike')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleStrike().run() }}
+          />
+          <ToolbarBtn
+            label={<code className="font-mono text-xs">`</code>}
+            title="Kod (Ctrl+`)"
+            active={editor?.isActive('code')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleCode().run() }}
+          />
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+          <ToolbarBtn
+            label={
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            }
+            title="Madde işaretli liste"
+            active={editor?.isActive('bulletList')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBulletList().run() }}
+          />
+          <ToolbarBtn
+            label={
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            }
+            title="Görev listesi (checkbox)"
+            active={editor?.isActive('taskList')}
+            onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleTaskList().run() }}
+          />
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+          <span className="text-xs text-gray-400 dark:text-gray-500 select-none px-1">
+            Ctrl+V ile görüntü yapıştır
+          </span>
+        </div>
+
+        {/* Editor */}
+        <EditorContent
+          editor={editor}
+          className="tiptap-editor"
+          style={{ minHeight }}
+        />
+      </div>
       {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </>
   )

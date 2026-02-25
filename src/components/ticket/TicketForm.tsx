@@ -3,6 +3,7 @@ import type { CreateTicketInput, TicketPriority, TicketStatus } from '../../type
 import { useCreateTicket } from '../../hooks/useTickets'
 import { useUsers } from '../../hooks/useUsers'
 import { DescriptionEditor } from './DescriptionEditor'
+import { PriorityPicker } from './PriorityPicker'
 
 interface Props {
   onClose: () => void
@@ -106,16 +107,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
               {/* Priority */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Öncelik</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as TicketPriority)}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="low">Düşük</option>
-                  <option value="medium">Orta</option>
-                  <option value="high">Yüksek</option>
-                  <option value="critical">Kritik</option>
-                </select>
+                <PriorityPicker value={priority} onChange={(p) => setPriority(p as TicketPriority)} />
               </div>
 
               {/* Assignees */}

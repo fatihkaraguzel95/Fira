@@ -77,12 +77,14 @@ export interface Ticket {
   project_id: string | null
   due_date: string | null
   created_by: string
+  updated_by: string | null
   created_at: string
   updated_at: string
   order_index: number
   // Joined relations
   assignee: Profile | null
   creator: Profile | null
+  updater: Profile | null
   status_info: TicketStatus | null
   assignees: { user_id: string; user: Profile }[]
   tags: { tag: Tag }[]
@@ -112,6 +114,9 @@ export interface SubTask {
   id: string
   ticket_id: string
   title: string
+  description: string | null
+  priority: TicketPriority
+  due_date: string | null
   is_done: boolean
   created_by: string
   created_at: string
@@ -138,6 +143,14 @@ export interface CreateTicketInput {
   assignee_ids?: string[]
   due_date?: string | null
   tag_ids?: string[]
+}
+
+export interface UpdateSubTaskInput {
+  title?: string
+  description?: string | null
+  priority?: TicketPriority
+  due_date?: string | null
+  is_done?: boolean
 }
 
 export interface UpdateTicketInput {

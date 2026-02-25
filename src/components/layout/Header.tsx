@@ -9,6 +9,7 @@ interface Props {
   view: ViewMode;
   onViewChange: (v: ViewMode) => void;
   onNewTicket: () => void;
+  onShowWhatsNew: () => void;
   currentUserProfile: {
     id: string;
     email: string;
@@ -23,6 +24,7 @@ export function Header({
   view,
   onViewChange,
   onNewTicket,
+  onShowWhatsNew,
   currentUserProfile,
   project,
   team,
@@ -74,9 +76,13 @@ export function Header({
             <div className="relative">
               <button
                 onClick={() => setShowStatuses(!showStatuses)}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
               >
-                Durumlar ⚙
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                </svg>
+                Durumlar
               </button>
               {showStatuses && (
                 <div className="absolute left-0 top-10 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 w-64">
@@ -86,7 +92,7 @@ export function Header({
                     </p>
                     <button
                       onClick={() => setShowStatuses(false)}
-                      className="text-gray-400 hover:text-gray-600 text-xs"
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs"
                     >
                       ✕
                     </button>
@@ -100,9 +106,7 @@ export function Header({
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-3">
-        {/* Dark mode toggle */}
-
+      <div className="flex items-center gap-2">
         {project && (
           <button
             onClick={onNewTicket}
@@ -111,6 +115,20 @@ export function Header({
             <span className="text-base leading-none">+</span> Yeni Ticket
           </button>
         )}
+
+        {/* Whats New button */}
+        <button
+          onClick={onShowWhatsNew}
+          title="Yenilikler"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+          </svg>
+        </button>
+
+        {/* Dark mode toggle */}
         <button
           onClick={toggle}
           title={isDark ? "Açık mod" : "Karanlık mod"}
@@ -118,6 +136,7 @@ export function Header({
         >
           {isDark ? "☀️" : "🌙"}
         </button>
+
         {currentUserProfile && (
           <div className="flex items-center gap-2">
             <UserAvatar

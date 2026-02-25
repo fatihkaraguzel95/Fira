@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import type { SubTask } from '../types'
+import type { SubTask, UpdateSubTaskInput } from '../types'
 
 export function useSubTasks(ticketId: string) {
   return useQuery({
@@ -55,6 +55,17 @@ export function useToggleSubTask() {
         .from('ticket_subtasks')
         .update({ is_done })
         .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['subtasks', vars.ticketId] }),
+  })
+}
+
+export function useUpdateSubTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ticketId, input }: { id: string; ticketId: string; input: UpdateSubTaskInput }) => {
+      const { error } = await supabase.from('ticket_subtasks').update(input).eq('id', id)
       if (error) throw error
     },
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['subtasks', vars.ticketId] }),

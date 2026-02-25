@@ -7,14 +7,28 @@ const TICKET_SELECT = `
   status_info:ticket_statuses!tickets_status_id_fkey(id, name, color, order_index),
   assignee:profiles!tickets_assignee_id_fkey(id, email, full_name, avatar_url),
   creator:profiles!tickets_created_by_fkey(id, email, full_name, avatar_url),
+  updater:profiles!tickets_updated_by_fkey(id, email, full_name, avatar_url),
   assignees:ticket_assignees(user_id, user:profiles!ticket_assignees_user_id_fkey(id, email, full_name, avatar_url)),
   tags:ticket_tag_assignments(tag:tags!ticket_tag_assignments_tag_id_fkey(id, name, color))
 `
 
+// !inner converts to INNER JOIN so PostgREST filters the parent row too
+const TICKET_SELECT_WITH_ASSIGNEE_FILTER = `
+  *,
+  status_info:ticket_statuses!tickets_status_id_fkey(id, name, color, order_index),
+  assignee:profiles!tickets_assignee_id_fkey(id, email, full_name, avatar_url),
+  creator:profiles!tickets_created_by_fkey(id, email, full_name, avatar_url),
+  updater:profiles!tickets_updated_by_fkey(id, email, full_name, avatar_url),
+  assignees:ticket_assignees!inner(user_id, user:profiles!ticket_assignees_user_id_fkey(id, email, full_name, avatar_url)),
+  tags:ticket_tag_assignments(tag:tags!ticket_tag_assignments_tag_id_fkey(id, name, color))
+`
+
 async function fetchTickets(filters?: TicketFilters): Promise<Ticket[]> {
+  const selectStr = filters?.assignee_id ? TICKET_SELECT_WITH_ASSIGNEE_FILTER : TICKET_SELECT
+
   let query = supabase
     .from('tickets')
-    .select(TICKET_SELECT)
+    .select(selectStr)
     .order('order_index', { ascending: true })
 
   if (filters?.project_id) {
@@ -27,7 +41,7 @@ async function fetchTickets(filters?: TicketFilters): Promise<Ticket[]> {
     query = query.in('priority', filters.priority)
   }
   if (filters?.assignee_id) {
-    query = query.eq('assignee_id', filters.assignee_id)
+    query = query.eq('ticket_assignees.user_id', filters.assignee_id)
   }
   if (filters?.search) {
     query = query.ilike('title', `%${filters.search}%`)
@@ -68,7 +82,6 @@ export function useCreateTicket() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Oturum bulunamadı')
 
-      // Ensure profile exists
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -82,7 +95,6 @@ export function useCreateTicket() {
         })
       }
 
-      // Get max order_index
       const { data: maxData } = await supabase
         .from('tickets')
         .select('order_index')
@@ -101,14 +113,12 @@ export function useCreateTicket() {
         .single()
       if (error) throw error
 
-      // Add multiple assignees
       if (assignee_ids && assignee_ids.length > 0) {
         await supabase.from('ticket_assignees').insert(
           assignee_ids.map(uid => ({ ticket_id: (ticket as { id: string }).id, user_id: uid }))
         )
       }
 
-      // Add tags
       if (tag_ids && tag_ids.length > 0) {
         await supabase.from('ticket_tag_assignments').insert(
           tag_ids.map(tid => ({ ticket_id: (ticket as { id: string }).id, tag_id: tid }))
@@ -125,9 +135,10 @@ export function useUpdateTicket() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: UpdateTicketInput }) => {
+      const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('tickets')
-        .update({ ...input, updated_at: new Date().toISOString() })
+        .update({ ...input, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
         .eq('id', id)
         .select(TICKET_SELECT)
         .single()
@@ -156,15 +167,19 @@ export function useReorderTickets() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (updates: { id: string; status_id: string; order_index: number }[]) => {
+      const { data: { user } } = await supabase.auth.getUser()
       await Promise.all(
         updates.map(({ id, status_id, order_index }) =>
           supabase
             .from('tickets')
-            .update({ status_id, order_index, updated_at: new Date().toISOString() })
+            .update({ status_id, order_index, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
             .eq('id', id)
         )
       )
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['tickets'] }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['tickets'] })
+      qc.invalidateQueries({ queryKey: ['ticket'] })
+    },
   })
 }

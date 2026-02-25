@@ -17,6 +17,10 @@ import { WhatsNewModal } from '../components/WhatsNewModal'
 import type { ViewMode, Project, Team, Profile } from '../types'
 import { supabase } from '../lib/supabase'
 
+function getWhatsNewKey(userId: string) {
+  return `fira_whats_new_seen_${userId}`
+}
+
 export function BoardPage() {
   const { ticketId } = useParams<{ ticketId?: string }>()
   const { user } = useAuth()
@@ -38,9 +42,14 @@ export function BoardPage() {
   )
   const { data: statuses = [], isLoading: statusesLoading } = useStatuses(currentProject?.id ?? null)
 
-  // Show whats-new every time after login
+  // Show whats-new only once per user (localStorage)
   useEffect(() => {
-    if (user) setShowWhatsNew(true)
+    if (!user) return
+    const key = getWhatsNewKey(user.id)
+    const seen = localStorage.getItem(key)
+    if (!seen) {
+      setShowWhatsNew(true)
+    }
   }, [user])
 
   useEffect(() => {
@@ -61,6 +70,15 @@ export function BoardPage() {
     }
   }, [])
 
+  const handleCloseWhatsNew = () => {
+    setShowWhatsNew(false)
+    if (user) localStorage.setItem(getWhatsNewKey(user.id), '1')
+  }
+
+  const handleShowWhatsNew = () => {
+    setShowWhatsNew(true)
+  }
+
   const isLoading = ticketsLoading || statusesLoading
 
   return (
@@ -79,6 +97,7 @@ export function BoardPage() {
           view={view}
           onViewChange={setView}
           onNewTicket={() => setShowForm(true)}
+          onShowWhatsNew={handleShowWhatsNew}
           currentUserProfile={currentUserProfile}
           project={currentProject}
           team={currentTeam}
@@ -98,17 +117,15 @@ export function BoardPage() {
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent" />
             </div>
           ) : view === 'board' ? (
-            <KanbanBoard tickets={tickets} statuses={statuses} />
+            <KanbanBoard tickets={tickets} statuses={statuses} projectId={currentProject.id} />
           ) : (
             <TicketList projectId={currentProject.id} statuses={statuses} />
           )}
         </main>
       </div>
 
-      {/* Ticket detail modal (URL-driven) */}
       {ticketId && <TicketModal projectId={currentProject?.id ?? null} />}
 
-      {/* Quick create modal */}
       {showForm && currentProject && statuses.length > 0 && (
         <QuickCreateModal
           onClose={() => setShowForm(false)}
@@ -127,7 +144,7 @@ export function BoardPage() {
         />
       )}
 
-      {showWhatsNew && <WhatsNewModal onClose={() => setShowWhatsNew(false)} />}
+      {showWhatsNew && <WhatsNewModal onClose={handleCloseWhatsNew} />}
     </div>
   )
 }

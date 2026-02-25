@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import type { Ticket } from '../../types'
-import { PriorityBadge } from '../ticket/PriorityBadge'
+import { PriorityFlagBadge } from '../ticket/PriorityPicker'
 import { UserAvatar } from '../ticket/UserAvatar'
 
 interface Props {
@@ -29,7 +29,6 @@ export function TicketCard({ ticket }: Props) {
   const dueDate = ticket.due_date ? new Date(ticket.due_date) : null
   const isOverdue = dueDate && dueDate < new Date()
   const assignees = ticket.assignees ?? []
-  const tags = ticket.tags ?? []
 
   return (
     <div
@@ -44,42 +43,34 @@ export function TicketCard({ ticket }: Props) {
         ${isDragging ? 'shadow-lg ring-2 ring-blue-400' : ''}
       `}
     >
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 leading-snug line-clamp-2">
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 mb-2">
         {ticket.title}
       </p>
 
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {tags.slice(0, 3).map(({ tag }) => (
-            <span
-              key={tag.id}
-              className="text-xs px-1.5 py-0.5 rounded font-medium"
-              style={{ backgroundColor: tag.color + '22', color: tag.color }}
-            >
-              {tag.name}
-            </span>
-          ))}
-          {tags.length > 3 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">+{tags.length - 3}</span>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center justify-between gap-2">
-        <PriorityBadge priority={ticket.priority} />
-
         <div className="flex items-center gap-1.5">
-          {dueDate && (
-            <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-              {dueDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
-            </span>
+          <PriorityFlagBadge priority={ticket.priority} size="sm" />
+          {assignees.length > 0 && (
+            <div className="flex -space-x-1.5">
+              {assignees.slice(0, 3).map(({ user }) => (
+                <div key={user.id} className="ring-1 ring-white dark:ring-gray-800 rounded-full">
+                  <UserAvatar user={user} size="sm" />
+                </div>
+              ))}
+              {assignees.length > 3 && (
+                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 ring-1 ring-white dark:ring-gray-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 font-medium">
+                  +{assignees.length - 3}
+                </div>
+              )}
+            </div>
           )}
-          <div className="flex -space-x-1">
-            {assignees.slice(0, 3).map(({ user }) => (
-              <UserAvatar key={user.id} user={user} size="sm" />
-            ))}
-          </div>
         </div>
+
+        {dueDate && (
+          <span className={`text-xs font-medium flex-shrink-0 ${isOverdue ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+            {dueDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+          </span>
+        )}
       </div>
     </div>
   )

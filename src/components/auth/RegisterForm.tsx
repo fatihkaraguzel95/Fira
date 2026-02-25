@@ -1,6 +1,21 @@
 import { useState, FormEvent } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { Link } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
+
+function translateError(msg: string): string {
+  if (msg.includes('User already registered') || msg.includes('already been registered'))
+    return 'Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.'
+  if (msg.includes('Password should be at least'))
+    return 'Şifre en az 6 karakter olmalıdır.'
+  if (msg.includes('Unable to validate email'))
+    return 'Geçersiz e-posta adresi.'
+  if (msg.includes('Signup is disabled'))
+    return 'Kayıt şu anda kapalı. Lütfen yöneticiye başvurun.'
+  if (msg.includes('rate limit') || msg.includes('Too many'))
+    return 'Çok fazla deneme yapıldı. Lütfen bekleyin.'
+  return msg
+}
 
 export function RegisterForm() {
   const { signUp } = useAuth()
@@ -17,9 +32,16 @@ export function RegisterForm() {
     setLoading(true)
     try {
       await signUp(email, password, fullName)
-      setSuccess(true)
+      // Check if session was created (email confirmation disabled)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        window.location.href = '/'
+      } else {
+        setSuccess(true)
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Kayıt başarısız')
+      const msg = err instanceof Error ? err.message : 'Kayıt başarısız'
+      setError(translateError(msg))
     } finally {
       setLoading(false)
     }
@@ -29,14 +51,21 @@ export function RegisterForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm text-center">
-          <div className="text-green-500 text-5xl mb-4">✓</div>
+          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Kayıt Başarılı!</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            E-postanıza doğrulama linki gönderildi. E-postanızı doğruladıktan sonra giriş yapabilirsiniz.
+          <p className="text-gray-500 text-sm mb-2">
+            <span className="font-medium text-gray-700">{email}</span> adresine doğrulama linki gönderildi.
+          </p>
+          <p className="text-gray-400 text-xs mb-6">
+            E-postanızı doğruladıktan sonra giriş yapabilirsiniz. Spam klasörünü de kontrol edin.
           </p>
           <Link
             to="/login"
-            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors text-sm"
           >
             Giriş Yap
           </Link>
@@ -98,13 +127,15 @@ export function RegisterForm() {
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Kayıt olunuyor...' : 'Kayıt Ol'}
           </button>
