@@ -12,6 +12,44 @@
   }
 }
 
+/* ── Dark mode: form element overrides ──────────────────────────────────────── */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="date"],
+.dark input[type="number"],
+.dark textarea,
+.dark select {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+  color-scheme: dark;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+/* contenteditable editor in dark mode */
+.dark [contenteditable] {
+  background-color: #1f2937;
+  border-color: #374151 !important;
+  color: #f9fafb;
+}
+
+/* Placeholder for contenteditable (no React state needed) */
+[contenteditable][data-empty="true"]::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+.dark [contenteditable][data-empty="true"]::before {
+  color: #6b7280;
+}
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
@@ -25,5 +63,8 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full;
+  }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded-full;
   }
 }

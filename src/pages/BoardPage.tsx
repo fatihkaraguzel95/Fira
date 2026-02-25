@@ -7,18 +7,20 @@ import { Header } from '../components/layout/Header'
 import { Sidebar } from '../components/layout/Sidebar'
 import { KanbanBoard } from '../components/board/KanbanBoard'
 import { TicketList } from '../components/list/TicketList'
-import { TicketForm } from '../components/ticket/TicketForm'
+import { QuickCreateModal } from '../components/ticket/QuickCreateModal'
 import { TicketModal } from '../components/ticket/TicketModal'
 import { CreateTeamModal } from '../components/team/CreateTeamModal'
 import { JoinTeamModal } from '../components/team/JoinTeamModal'
 import { InviteModal } from '../components/team/InviteModal'
 import { CreateProjectModal } from '../components/project/CreateProjectModal'
+import { WhatsNewModal } from '../components/WhatsNewModal'
 import type { ViewMode, Project, Team, Profile } from '../types'
 import { supabase } from '../lib/supabase'
 
 export function BoardPage() {
   const { ticketId } = useParams<{ ticketId?: string }>()
   const { user } = useAuth()
+  const [showWhatsNew, setShowWhatsNew] = useState(false)
 
   const [view, setView] = useState<ViewMode>('board')
   const [showForm, setShowForm] = useState(false)
@@ -26,7 +28,6 @@ export function BoardPage() {
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null)
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null)
 
-  // Modals
   const [showCreateTeam, setShowCreateTeam] = useState(false)
   const [showJoinTeam, setShowJoinTeam] = useState(false)
   const [inviteTarget, setInviteTarget] = useState<Team | null>(null)
@@ -37,7 +38,11 @@ export function BoardPage() {
   )
   const { data: statuses = [], isLoading: statusesLoading } = useStatuses(currentProject?.id ?? null)
 
-  // Fetch current user profile
+  // Show whats-new every time after login
+  useEffect(() => {
+    if (user) setShowWhatsNew(true)
+  }, [user])
+
   useEffect(() => {
     if (!user) return
     supabase
@@ -48,7 +53,6 @@ export function BoardPage() {
       .then(({ data }) => { if (data) setCurrentUserProfile(data as Profile) })
   }, [user])
 
-  // Handle pending invite token (set before redirect to login)
   useEffect(() => {
     const pendingToken = sessionStorage.getItem('pendingInviteToken')
     if (pendingToken) {
@@ -60,8 +64,7 @@ export function BoardPage() {
   const isLoading = ticketsLoading || statusesLoading
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
-      {/* Sidebar */}
+    <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-950">
       <Sidebar
         selectedProjectId={currentProject?.id ?? null}
         onSelectProject={(project, team) => { setCurrentProject(project); setCurrentTeam(team) }}
@@ -71,7 +74,6 @@ export function BoardPage() {
         onInvite={(team) => setInviteTarget(team)}
       />
 
-      {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           view={view}
@@ -87,8 +89,8 @@ export function BoardPage() {
             <div className="flex-1 flex items-center justify-center h-full">
               <div className="text-center">
                 <p className="text-4xl mb-4">📋</p>
-                <p className="text-gray-500 text-sm">Başlamak için sol menüden bir proje seç</p>
-                <p className="text-gray-400 text-xs mt-2">veya yeni bir takım/proje oluştur</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Başlamak için sol menüden bir proje seç</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-2">veya yeni bir takım/proje oluştur</p>
               </div>
             </div>
           ) : isLoading ? (
@@ -103,19 +105,18 @@ export function BoardPage() {
         </main>
       </div>
 
-      {/* Ticket Modal (URL-driven) */}
+      {/* Ticket detail modal (URL-driven) */}
       {ticketId && <TicketModal projectId={currentProject?.id ?? null} />}
 
-      {/* New Ticket Form */}
+      {/* Quick create modal */}
       {showForm && currentProject && statuses.length > 0 && (
-        <TicketForm
+        <QuickCreateModal
           onClose={() => setShowForm(false)}
           statuses={statuses}
           projectId={currentProject.id}
         />
       )}
 
-      {/* Team modals */}
       {showCreateTeam && <CreateTeamModal onClose={() => setShowCreateTeam(false)} />}
       {showJoinTeam && <JoinTeamModal onClose={() => setShowJoinTeam(false)} />}
       {inviteTarget && <InviteModal team={inviteTarget} onClose={() => setInviteTarget(null)} />}
@@ -125,6 +126,8 @@ export function BoardPage() {
           onClose={() => setCreateProjectTarget(null)}
         />
       )}
+
+      {showWhatsNew && <WhatsNewModal onClose={() => setShowWhatsNew(false)} />}
     </div>
   )
 }

@@ -107,6 +107,26 @@ export interface TicketComment {
   author: Profile | null
 }
 
+// ─── Subtasks ─────────────────────────────────────────────────────────────────
+export interface SubTask {
+  id: string
+  ticket_id: string
+  title: string
+  is_done: boolean
+  created_by: string
+  created_at: string
+  order_index: number
+}
+
+// ─── Extra Deadlines ──────────────────────────────────────────────────────────
+export interface TicketDeadline {
+  id: string
+  ticket_id: string
+  date: string
+  description: string | null
+  created_at: string
+}
+
 // ─── Form Types ───────────────────────────────────────────────────────────────
 export interface CreateTicketInput {
   title: string

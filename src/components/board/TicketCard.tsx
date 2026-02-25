@@ -39,16 +39,15 @@ export function TicketCard({ ticket }: Props) {
       {...listeners}
       onClick={handleClick}
       className={`
-        bg-white rounded-lg border border-gray-200 p-3 cursor-pointer
-        hover:shadow-md hover:border-blue-300 transition-all select-none
+        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-pointer
+        hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all select-none
         ${isDragging ? 'shadow-lg ring-2 ring-blue-400' : ''}
       `}
     >
-      <p className="text-sm font-medium text-gray-900 mb-2 leading-snug line-clamp-2">
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 leading-snug line-clamp-2">
         {ticket.title}
       </p>
 
-      {/* Tags */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {tags.slice(0, 3).map(({ tag }) => (
@@ -61,7 +60,7 @@ export function TicketCard({ ticket }: Props) {
             </span>
           ))}
           {tags.length > 3 && (
-            <span className="text-xs text-gray-400">+{tags.length - 3}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">+{tags.length - 3}</span>
           )}
         </div>
       )}
@@ -71,11 +70,10 @@ export function TicketCard({ ticket }: Props) {
 
         <div className="flex items-center gap-1.5">
           {dueDate && (
-            <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+            <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
               {dueDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
             </span>
           )}
-          {/* Multi-assignee avatars */}
           <div className="flex -space-x-1">
             {assignees.slice(0, 3).map(({ user }) => (
               <UserAvatar key={user.id} user={user} size="sm" />
