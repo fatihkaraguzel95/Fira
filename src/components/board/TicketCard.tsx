@@ -29,6 +29,7 @@ export function TicketCard({ ticket }: Props) {
   const dueDate = ticket.due_date ? new Date(ticket.due_date) : null
   const isOverdue = dueDate && dueDate < new Date()
   const assignees = ticket.assignees ?? []
+  const tags = ticket.tags ?? []
 
   return (
     <div
@@ -46,6 +47,25 @@ export function TicketCard({ ticket }: Props) {
       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 mb-2">
         {ticket.title}
       </p>
+
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {tags.slice(0, 3).map(({ tag }) => (
+            <span
+              key={tag.id}
+              className="text-xs px-1.5 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: tag.color + '20', color: tag.color }}
+            >
+              {tag.name}
+            </span>
+          ))}
+          {tags.length > 3 && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-medium">
+              +{tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
