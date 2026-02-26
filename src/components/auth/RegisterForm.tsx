@@ -12,8 +12,8 @@ function translateError(msg: string): string {
     return 'Geçersiz e-posta adresi.'
   if (msg.includes('Signup is disabled'))
     return 'Kayıt şu anda kapalı. Lütfen yöneticiye başvurun.'
-  if (msg.includes('rate limit') || msg.includes('Too many'))
-    return 'Çok fazla deneme yapıldı. Lütfen bekleyin.'
+  if (msg.includes('rate limit') || msg.includes('Too many') || msg.includes('over_email_send_rate_limit'))
+    return 'E-posta gönderme limiti aşıldı. Lütfen birkaç dakika bekleyin.'
   return msg
 }
 

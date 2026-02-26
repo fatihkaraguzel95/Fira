@@ -36,3 +36,15 @@ export function useCreateProject() {
     onSuccess: (_d, { teamId }) => qc.invalidateQueries({ queryKey: ['projects', teamId] }),
   })
 }
+
+export function useDeleteProject() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ projectId, teamId }: { projectId: string; teamId: string }) => {
+      const { error } = await supabase.from('projects').delete().eq('id', projectId)
+      if (error) throw error
+      return teamId
+    },
+    onSuccess: (teamId) => qc.invalidateQueries({ queryKey: ['projects', teamId] }),
+  })
+}

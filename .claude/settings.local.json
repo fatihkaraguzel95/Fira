@@ -10,7 +10,10 @@
       "Bash(cd:*)",
       "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && npx tsc --noEmit 2>&1)",
       "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && npx supabase db push 2>&1)",
-      "Bash(echo OK:*)"
+      "Bash(echo OK:*)",
+      "Bash(npm view:*)",
+      "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && node -e \"const {createClient} = require\\('./node_modules/@supabase/supabase-js'\\); const url=process.env.VITE_SUPABASE_URL||''; const key=process.env.VITE_SUPABASE_ANON_KEY||''; console.log\\('URL:', url ? 'set' : 'MISSING'\\); console.log\\('KEY:', key ? key.substring\\(0,20\\)+'...' : 'MISSING'\\);\" 2>&1)",
+      "Bash(cd /c/Users/MFK/Desktop/Workspace/Fira && node -e \"\nconst {createClient} = require\\('./node_modules/@supabase/supabase-js'\\);\nconst client = createClient\\(\n  'https://zkyegeioiyxaiamugbjt.supabase.co',\n  'sb_publishable_zTB0wSuKlS15hrgOzzjvPA_krhqvHo_'\n\\);\nclient.auth.signUp\\({email:'test@test.com', password:'test123456'}\\).then\\(r => {\n  console.log\\('error:', JSON.stringify\\(r.error\\)\\);\n  console.log\\('data user:', r.data?.user?.id\\);\n}\\).catch\\(e => console.log\\('catch:', e.message\\)\\);\n\" 2>&1)"
     ]
   }
 }

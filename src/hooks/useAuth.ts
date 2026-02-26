@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { queryClient } from '../lib/queryClient'
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
@@ -14,7 +15,10 @@ export function useAuth() {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        queryClient.clear()
+      }
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -34,6 +38,7 @@ export function useAuth() {
       password,
       options: {
         data: { full_name: fullName },
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     })
     if (error) throw error

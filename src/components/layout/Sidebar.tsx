@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMyTeams, useDeleteTeam } from '../../hooks/useTeams'
-import { useProjects } from '../../hooks/useProjects'
+import { useProjects, useDeleteProject } from '../../hooks/useProjects'
 import type { Team, Project } from '../../types'
 
 // ─── Delete Team Confirm Modal ────────────────────────────────────────────────
@@ -84,6 +84,87 @@ function DeleteTeamModal({ team, onClose, onConfirm }: { team: Team; onClose: ()
   )
 }
 
+// ─── Delete Project Confirm Modal ─────────────────────────────────────────────
+function DeleteProjectModal({ project, onClose, onConfirm }: { project: Project; onClose: () => void; onConfirm: () => void }) {
+  const [step, setStep] = useState<'confirm' | 'type'>('confirm')
+  const [typed, setTyped] = useState('')
+  const expected = `eminim ${project.name}`
+  const matches = typed.trim().toLowerCase() === expected.toLowerCase()
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[80] p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100">Projeyi Sil</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bu işlem geri alınamaz</p>
+          </div>
+        </div>
+
+        {step === 'confirm' ? (
+          <>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">"{project.name}"</span> projesini silmek istediğinden emin misin?
+              Tüm ticketlar ve veriler kalıcı olarak silinecek.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={() => setStep('type')}
+                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Evet, devam et
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Onaylamak için aşağıya tam olarak şunu yaz:
+            </p>
+            <p className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 mb-3 select-all">
+              eminim {project.name}
+            </p>
+            <input
+              autoFocus
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={`eminim ${project.name}`}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-transparent dark:text-gray-200 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={onConfirm}
+                disabled={!matches}
+                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Projeyi Sil
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Team Row ─────────────────────────────────────────────────────────────────
 function TeamRow({
   team,
@@ -91,21 +172,32 @@ function TeamRow({
   onSelectProject,
   onCreateProject,
   onInvite,
+  onProjectDeleted,
 }: {
   team: Team
   selectedProjectId: string | null
   onSelectProject: (project: Project, team: Team) => void
   onCreateProject: (team: Team) => void
   onInvite: (team: Team) => void
+  onProjectDeleted: (projectId: string) => void
 }) {
   const [expanded, setExpanded] = useState(true)
   const [showDelete, setShowDelete] = useState(false)
+  const [deleteProject, setDeleteProject] = useState<Project | null>(null)
   const { data: projects } = useProjects(team.id)
   const deleteTeam = useDeleteTeam()
+  const deleteProjectMutation = useDeleteProject()
 
   const handleDelete = async () => {
     await deleteTeam.mutateAsync(team.id)
     setShowDelete(false)
+  }
+
+  const handleDeleteProject = async () => {
+    if (!deleteProject) return
+    await deleteProjectMutation.mutateAsync({ projectId: deleteProject.id, teamId: team.id })
+    onProjectDeleted(deleteProject.id)
+    setDeleteProject(null)
   }
 
   return (
@@ -160,24 +252,39 @@ function TeamRow({
             {projects?.map((project) => {
               const isActive = selectedProjectId === project.id
               return (
-                <button
-                  key={project.id}
-                  onClick={() => onSelectProject(project, team)}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-2 my-0.5 ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <svg
-                    className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                <div key={project.id} className="group/proj relative flex items-center my-0.5">
+                  <button
+                    onClick={() => onSelectProject(project, team)}
+                    className={`flex-1 text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-2 min-w-0 ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                  <span className="truncate font-medium text-xs">{project.name}</span>
-                </button>
+                    <svg
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    <span className="truncate font-medium text-xs">{project.name}</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteProject(project) }}
+                    title="Projeyi sil"
+                    className={`absolute right-1 w-5 h-5 flex items-center justify-center rounded transition-all opacity-0 group-hover/proj:opacity-100 ${
+                      isActive
+                        ? 'text-blue-200 hover:text-white hover:bg-blue-500'
+                        : 'text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                    }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               )
             })}
 
@@ -199,6 +306,14 @@ function TeamRow({
           team={team}
           onClose={() => setShowDelete(false)}
           onConfirm={handleDelete}
+        />
+      )}
+
+      {deleteProject && (
+        <DeleteProjectModal
+          project={deleteProject}
+          onClose={() => setDeleteProject(null)}
+          onConfirm={handleDeleteProject}
         />
       )}
     </>
