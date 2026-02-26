@@ -146,15 +146,14 @@ export function DescriptionEditor({
     },
   })
 
-  // Sync when a different ticket is opened (key-based reset is preferred, but handle value drift too)
+  // Sync editor content when value prop changes (e.g. ticket loads after editor mounts)
   useEffect(() => {
     if (!editor) return
     const current = editor.storage.markdown.getMarkdown()
     if (current !== value) {
       editor.commands.setContent(value, false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor])
+  }, [editor, value])
 
   // ── ReadOnly mode ────────────────────────────────────────────────────────────
   if (readOnly) {

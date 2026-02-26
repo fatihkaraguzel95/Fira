@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMyTeams, useDeleteTeam } from '../../hooks/useTeams'
 import { useProjects, useDeleteProject } from '../../hooks/useProjects'
+import { useAuth } from '../../hooks/useAuth'
 import type { Team, Project } from '../../types'
 
 // ─── Delete Team Confirm Modal ────────────────────────────────────────────────
@@ -169,6 +170,7 @@ function DeleteProjectModal({ project, onClose, onConfirm }: { project: Project;
 function TeamRow({
   team,
   selectedProjectId,
+  currentUserId,
   onSelectProject,
   onCreateProject,
   onInvite,
@@ -176,6 +178,7 @@ function TeamRow({
 }: {
   team: Team
   selectedProjectId: string | null
+  currentUserId: string | null
   onSelectProject: (project: Project, team: Team) => void
   onCreateProject: (team: Team) => void
   onInvite: (team: Team) => void
@@ -233,16 +236,18 @@ function TeamRow({
             >
               +
             </button>
-            <button
-              onClick={() => setShowDelete(true)}
-              title="Takımı sil"
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            {currentUserId === team.created_by && (
+              <button
+                onClick={() => setShowDelete(true)}
+                title="Takımı sil"
+                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
@@ -332,6 +337,7 @@ interface Props {
 
 export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJoinTeam, onCreateProject, onInvite }: Props) {
   const { data: teams, isLoading } = useMyTeams()
+  const { user } = useAuth()
 
   return (
     <aside className="w-60 flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full">
@@ -371,6 +377,7 @@ export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJo
                 key={team.id}
                 team={team}
                 selectedProjectId={selectedProjectId}
+                currentUserId={user?.id ?? null}
                 onSelectProject={onSelectProject}
                 onCreateProject={onCreateProject}
                 onInvite={onInvite}

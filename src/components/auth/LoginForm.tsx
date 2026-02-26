@@ -3,14 +3,18 @@ import { useAuth } from '../../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-export function LoginForm() {
+interface LoginFormProps {
+  changeMode: boolean
+  onChangeModeToggle: (value: boolean) => void
+}
+
+export function LoginForm({ changeMode, onChangeModeToggle }: LoginFormProps) {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [changeMode, setChangeMode] = useState(false)
   const [changeEmail, setChangeEmail] = useState('')
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -84,8 +88,24 @@ export function LoginForm() {
 
   if (changeMode) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 40%, #312e81 100%)' }}
+      >
+        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10%" cy="20%" r="220" fill="white" />
+          <circle cx="85%" cy="75%" r="280" fill="white" />
+          <circle cx="75%" cy="10%" r="150" fill="white" />
+          <circle cx="20%" cy="85%" r="180" fill="white" />
+        </svg>
+        <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="dots3" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.5" fill="white" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots3)" />
+        </svg>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
             <p className="text-gray-500 mt-1 text-sm">Şifre Değiştir</p>
@@ -100,7 +120,7 @@ export function LoginForm() {
               </div>
               <p className="text-gray-700 text-sm font-medium mb-4">Şifreniz başarıyla güncellendi.</p>
               <button
-                onClick={() => { setChangeMode(false); setChanged(false); setOldPassword(''); setNewPassword(''); setChangeEmail('') }}
+                onClick={() => { onChangeModeToggle(false); setChanged(false); setOldPassword(''); setNewPassword(''); setChangeEmail('') }}
                 className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Giriş Yap
@@ -157,7 +177,7 @@ export function LoginForm() {
               </button>
               <button
                 type="button"
-                onClick={() => { setChangeMode(false); setError(''); setOldPassword(''); setNewPassword('') }}
+                onClick={() => { onChangeModeToggle(false); setError(''); setOldPassword(''); setNewPassword('') }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700"
               >
                 Geri dön
@@ -170,8 +190,27 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 40%, #312e81 100%)' }}
+    >
+      {/* Decorative blobs */}
+      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10%" cy="20%" r="220" fill="white" />
+        <circle cx="85%" cy="75%" r="280" fill="white" />
+        <circle cx="75%" cy="10%" r="150" fill="white" />
+        <circle cx="20%" cy="85%" r="180" fill="white" />
+      </svg>
+      {/* Grid dots */}
+      <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.5" fill="white" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dots)" />
+      </svg>
+
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
           <p className="text-gray-500 mt-1 text-sm">Ticket Yönetim Sistemi</p>
@@ -195,7 +234,7 @@ export function LoginForm() {
               <label className="block text-sm font-medium text-gray-700">Şifre</label>
               <button
                 type="button"
-                onClick={() => { setChangeMode(true); setChangeEmail(email); setError('') }}
+                onClick={() => { onChangeModeToggle(true); setChangeEmail(email); setError('') }}
                 className="text-xs text-blue-600 hover:underline"
               >
                 Şifremi değiştir

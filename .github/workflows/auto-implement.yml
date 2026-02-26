@@ -1,0 +1,47 @@
+name: AI Ticket Processor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # Her 6 saatte bir (00:00, 06:00, 12:00, 18:00 UTC)
+  workflow_dispatch:          # Manuel tetikleme (GitHub UI'dan çalıştır butonu)
+
+jobs:
+  process-tickets:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write        # Branch push edebilmek için
+      pull-requests: write   # PR açabilmek için
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0     # Tüm branch geçmişi (ls-remote için gerekli)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install @anthropic-ai/sdk
+
+      - name: Configure git
+        run: |
+          git config user.name "Fira AI Bot"
+          git config user.email "ai-bot@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Run ticket processor
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TARGET_PROJECT_ID: ${{ secrets.TARGET_PROJECT_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ticket-processor.mjs
