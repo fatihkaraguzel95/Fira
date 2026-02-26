@@ -59,10 +59,7 @@ export function TicketModal({ projectId }: Props) {
 
   const close = () => navigate(-1)
 
-  const canEdit = !!user && (
-    isTeamOwner ||
-    ticket?.assignees?.some((a) => a.user_id === user.id)
-  )
+  const canEdit = !!user
 
   const handleUpdate = (input: Parameters<typeof updateTicket.mutate>[0]['input']) => {
     if (!ticket) return
