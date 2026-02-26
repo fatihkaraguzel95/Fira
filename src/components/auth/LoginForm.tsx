@@ -9,15 +9,17 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [forgotMode, setForgotMode] = useState(false)
-  const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotSent, setForgotSent] = useState(false)
-  const [forgotLoading, setForgotLoading] = useState(false)
+
+  const [changeMode, setChangeMode] = useState(false)
+  const [changeEmail, setChangeEmail] = useState('')
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [changed, setChanged] = useState(false)
 
   const translateError = (msg: string): string => {
     if (msg.includes('Invalid login credentials')) return 'E-posta veya şifre hatalı.'
-    if (msg.includes('Email not confirmed')) return 'E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzu kontrol edin ve doğrulama linkine tıklayın.'
-    if (msg.includes('Too many requests')) return 'Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyin.'
+    if (msg.includes('Email not confirmed')) return 'E-postanız henüz doğrulanmamış.'
+    if (msg.includes('Too many requests')) return 'Çok fazla deneme yapıldı. Lütfen bekleyin.'
     if (msg.includes('User not found')) return 'Bu e-posta ile kayıtlı hesap bulunamadı.'
     return msg
   }
@@ -36,18 +38,32 @@ export function LoginForm() {
     }
   }
 
-  const handleForgot = async (e: FormEvent) => {
+  const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault()
-    setForgotLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    setForgotLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      setForgotSent(true)
+    setError('')
+    if (newPassword.length < 6) {
+      setError('Yeni şifre en az 6 karakter olmalıdır.')
+      return
     }
+    setLoading(true)
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: changeEmail,
+      password: oldPassword,
+    })
+    if (signInError) {
+      setError('Eski şifre hatalı.')
+      setLoading(false)
+      return
+    }
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+    if (updateError) {
+      setError(updateError.message)
+      setLoading(false)
+      return
+    }
+    await supabase.auth.signOut()
+    setLoading(false)
+    setChanged(true)
   }
 
   const handleGoogle = async () => {
@@ -66,61 +82,82 @@ export function LoginForm() {
     }
   }
 
-  if (forgotMode) {
+  if (changeMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
-            <p className="text-gray-500 mt-1 text-sm">Şifre Sıfırlama</p>
+            <p className="text-gray-500 mt-1 text-sm">Şifre Değiştir</p>
           </div>
 
-          {forgotSent ? (
+          {changed ? (
             <div className="text-center">
               <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-gray-700 text-sm font-medium mb-1">E-posta gönderildi</p>
-              <p className="text-gray-400 text-xs mb-6">
-                <span className="font-medium text-gray-600">{forgotEmail}</span> adresine şifre sıfırlama linki gönderildi. Spam klasörünü de kontrol edin.
-              </p>
+              <p className="text-gray-700 text-sm font-medium mb-4">Şifreniz başarıyla güncellendi.</p>
               <button
-                onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail('') }}
-                className="text-blue-600 text-sm font-medium hover:underline"
+                onClick={() => { setChangeMode(false); setChanged(false); setOldPassword(''); setNewPassword(''); setChangeEmail('') }}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
-                Giriş ekranına dön
+                Giriş Yap
               </button>
             </div>
           ) : (
-            <form onSubmit={handleForgot} className="space-y-4">
-              <p className="text-sm text-gray-500">Kayıtlı e-posta adresinizi girin, şifre sıfırlama linki gönderelim.</p>
+            <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
                 <input
                   type="email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
+                  value={changeEmail}
+                  onChange={(e) => setChangeEmail(e.target.value)}
                   required
                   autoFocus
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="ad@sirket.com"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Eski Şifre</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Yeni Şifre</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="En az 6 karakter"
+                />
+              </div>
+
               {error && (
                 <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
               )}
+
               <button
                 type="submit"
-                disabled={forgotLoading}
+                disabled={loading}
                 className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {forgotLoading ? 'Gönderiliyor...' : 'Sıfırlama Linki Gönder'}
+                {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
               </button>
               <button
                 type="button"
-                onClick={() => { setForgotMode(false); setError('') }}
+                onClick={() => { setChangeMode(false); setError(''); setOldPassword(''); setNewPassword('') }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700"
               >
                 Geri dön
@@ -142,9 +179,7 @@ export function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              E-posta
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
             <input
               type="email"
               value={email}
@@ -160,10 +195,10 @@ export function LoginForm() {
               <label className="block text-sm font-medium text-gray-700">Şifre</label>
               <button
                 type="button"
-                onClick={() => { setForgotMode(true); setForgotEmail(email); setError('') }}
+                onClick={() => { setChangeMode(true); setChangeEmail(email); setError('') }}
                 className="text-xs text-blue-600 hover:underline"
               >
-                Şifremi unuttum
+                Şifremi değiştir
               </button>
             </div>
             <input

@@ -6,7 +6,6 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { BoardPage } from './pages/BoardPage'
 import { InvitePage } from './pages/InvitePage'
-import { ResetPasswordPage } from './pages/ResetPasswordPage'
 
 export default function App() {
   return (
@@ -15,7 +14,6 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/invite/:token" element={<InvitePage />} />
           <Route
             path="/"
