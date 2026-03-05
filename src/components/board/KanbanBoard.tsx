@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Ticket, TicketStatus } from '../../types'
 import { KanbanColumn } from './KanbanColumn'
 import { TicketCard } from './TicketCard'
-import { useReorderTickets } from '../../hooks/useTickets'
+import { useReorderTickets, useArchiveTicket, getLocalArchivedIds } from '../../hooks/useTickets'
 import { useCreateStatus } from '../../hooks/useStatuses'
 
 const COLORS = [
@@ -129,7 +129,32 @@ export function KanbanBoard({ tickets, statuses, projectId }: Props) {
   columnsRef.current = columns
 
   const reorder = useReorderTickets()
+  const archiveTicket = useArchiveTicket()
   const dragFromId = useRef<string | null>(null)
+
+  // Combine DB archived_at + localStorage fallback
+  const [localArchivedIds, setLocalArchivedIds] = useState<Set<string>>(() => getLocalArchivedIds())
+
+  const isEffectivelyArchived = (t: Ticket) => !!t.archived_at || localArchivedIds.has(t.id)
+
+  const handleArchive = (id: string, archived: boolean) => {
+    setLocalArchivedIds(prev => {
+      const next = new Set(prev)
+      if (archived) next.add(id)
+      else next.delete(id)
+      return next
+    })
+    archiveTicket.mutate({ id, archived })
+  }
+
+  const archivedMap = new Map<string, Ticket[]>()
+  statuses.forEach((s) => {
+    archivedMap.set(
+      s.id,
+      tickets.filter((t) => t.status_id === s.id && isEffectivelyArchived(t))
+        .sort((a, b) => a.order_index - b.order_index),
+    )
+  })
 
   useEffect(() => {
     if (isDragging.current) return
@@ -138,12 +163,12 @@ export function KanbanBoard({ tickets, statuses, projectId }: Props) {
       map.set(
         s.id,
         tickets
-          .filter((t) => t.status_id === s.id)
+          .filter((t) => t.status_id === s.id && !isEffectivelyArchived(t))
           .sort((a, b) => a.order_index - b.order_index),
       )
     })
     setColumns(map)
-  }, [tickets, statuses])
+  }, [tickets, statuses, localArchivedIds])
 
   const findColId = (id: string): string | null => {
     if (columnsRef.current.has(id)) return id
@@ -256,6 +281,8 @@ export function KanbanBoard({ tickets, statuses, projectId }: Props) {
             key={status.id}
             status={status}
             tickets={columns.get(status.id) ?? []}
+            archivedTickets={archivedMap.get(status.id) ?? []}
+            onArchive={handleArchive}
           />
         ))}
         <AddStatusColumn projectId={projectId} />

@@ -46,6 +46,9 @@ async function fetchTickets(filters?: TicketFilters): Promise<Ticket[]> {
   if (filters?.search) {
     query = query.ilike('title', `%${filters.search}%`)
   }
+  if (!filters?.include_archived) {
+    query = query.is('archived_at', null)
+  }
 
   const { data, error } = await query
   if (error) throw error
@@ -161,6 +164,44 @@ export function useDeleteTicket() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tickets'] }),
   })
+}
+
+function getLocalArchived(): Set<string> {
+  try {
+    const raw = localStorage.getItem('fira_archived_tickets')
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function setLocalArchived(ids: Set<string>) {
+  localStorage.setItem('fira_archived_tickets', JSON.stringify([...ids]))
+}
+
+export function useArchiveTicket() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
+      // Always update localStorage (works without migration)
+      const ids = getLocalArchived()
+      if (archived) ids.add(id)
+      else ids.delete(id)
+      setLocalArchived(ids)
+      // Also try Supabase silently (works after migration 021)
+      supabase
+        .from('tickets')
+        .update({ archived_at: archived ? new Date().toISOString() : null })
+        .eq('id', id)
+        .then(() => {})
+        .catch(() => {})
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tickets'] }),
+  })
+}
+
+export function getLocalArchivedIds(): Set<string> {
+  return getLocalArchived()
 }
 
 export function useReorderTickets() {

@@ -1,10 +1,10 @@
 import type { TicketPriority } from '../../types'
 
 const PRIORITIES: { value: TicketPriority; label: string; color: string; bg: string; ring: string }[] = [
-  { value: 'low',      label: 'Düşük',  color: '#3b82f6', bg: 'bg-blue-50 dark:bg-blue-950/40',     ring: 'ring-blue-400' },
-  { value: 'medium',   label: 'Orta',   color: '#f59e0b', bg: 'bg-amber-50 dark:bg-amber-950/40',   ring: 'ring-amber-400' },
-  { value: 'high',     label: 'Yüksek', color: '#f97316', bg: 'bg-orange-50 dark:bg-orange-950/40', ring: 'ring-orange-400' },
-  { value: 'critical', label: 'Kritik', color: '#ef4444', bg: 'bg-red-50 dark:bg-red-950/40',       ring: 'ring-red-400' },
+  { value: 'low',      label: 'Düşük',  color: '#9ca3af', bg: 'bg-gray-100 dark:bg-gray-700/50',     ring: 'ring-gray-400' },
+  { value: 'medium',   label: 'Orta',   color: '#3b82f6', bg: 'bg-blue-50 dark:bg-blue-950/40',      ring: 'ring-blue-500' },
+  { value: 'high',     label: 'Yüksek', color: '#eab308', bg: 'bg-yellow-50 dark:bg-yellow-950/40',  ring: 'ring-yellow-500' },
+  { value: 'critical', label: 'Kritik', color: '#ef4444', bg: 'bg-red-50 dark:bg-red-950/40',        ring: 'ring-red-500' },
 ]
 
 function FlagIcon({ color, filled }: { color: string; filled?: boolean }) {

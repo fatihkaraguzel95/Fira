@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useMyTeams, useDeleteTeam } from '../../hooks/useTeams'
-import { useProjects, useDeleteProject } from '../../hooks/useProjects'
+import { useEffect, useState } from 'react'
+import { useMyTeams, useDeleteTeam, useUpdateTeam } from '../../hooks/useTeams'
+import { useProjects, useDeleteProject, useUpdateProject } from '../../hooks/useProjects'
 import { useAuth } from '../../hooks/useAuth'
 import type { Team, Project } from '../../types'
 
@@ -187,9 +187,31 @@ function TeamRow({
   const [expanded, setExpanded] = useState(true)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteProject, setDeleteProject] = useState<Project | null>(null)
+  const [editingTeamName, setEditingTeamName] = useState(false)
+  const [teamNameValue, setTeamNameValue] = useState(team.name)
+  const [teamNameError, setTeamNameError] = useState<string | null>(null)
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
+  const [projectNameValue, setProjectNameValue] = useState('')
+
   const { data: projects } = useProjects(team.id)
   const deleteTeam = useDeleteTeam()
   const deleteProjectMutation = useDeleteProject()
+  const updateTeam = useUpdateTeam()
+  const updateProject = useUpdateProject()
+
+  // Sync team name input when prop changes (e.g. after failed update refetch)
+  useEffect(() => {
+    if (!editingTeamName) setTeamNameValue(team.name)
+  }, [team.name])
+
+  // Auto-restore last selected project on mount
+  useEffect(() => {
+    if (!projects || selectedProjectId) return
+    const savedId = localStorage.getItem('lastProjectId')
+    if (!savedId) return
+    const match = projects.find((p) => p.id === savedId)
+    if (match) onSelectProject(match, team)
+  }, [projects])
 
   const handleDelete = async () => {
     await deleteTeam.mutateAsync(team.id)
@@ -203,30 +225,73 @@ function TeamRow({
     setDeleteProject(null)
   }
 
+  const handleSaveTeamName = async () => {
+    setTeamNameError(null)
+    if (teamNameValue.trim() && teamNameValue.trim() !== team.name) {
+      try {
+        await updateTeam.mutateAsync({ id: team.id, name: teamNameValue.trim() })
+      } catch {
+        setTeamNameValue(team.name)
+        setTeamNameError('Takım adı değiştirilemedi')
+        setTimeout(() => setTeamNameError(null), 3000)
+      }
+    } else {
+      setTeamNameValue(team.name)
+    }
+    setEditingTeamName(false)
+  }
+
+  const handleSaveProjectName = async (project: Project) => {
+    if (projectNameValue.trim() && projectNameValue.trim() !== project.name) {
+      await updateProject.mutateAsync({ projectId: project.id, teamId: team.id, name: projectNameValue.trim() })
+    }
+    setEditingProjectId(null)
+  }
+
   return (
     <>
+      {teamNameError && (
+        <div className="mx-2 mb-1 px-2 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs rounded-lg">
+          {teamNameError}
+        </div>
+      )}
       <div className="mb-1">
         {/* Team header */}
         <div className="flex items-center gap-1 px-3 py-1.5 group rounded-lg mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-2 flex-1 text-left min-w-0"
-          >
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <span className="text-white text-xs font-bold leading-none">
-                {team.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
-              {team.name}
-            </span>
-            <svg
-              className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          {editingTeamName ? (
+            <input
+              autoFocus
+              value={teamNameValue}
+              onChange={(e) => setTeamNameValue(e.target.value)}
+              onBlur={handleSaveTeamName}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveTeamName()
+                if (e.key === 'Escape') { setTeamNameValue(team.name); setEditingTeamName(false) }
+              }}
+              className="flex-1 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-blue-500 outline-none bg-transparent"
+            />
+          ) : (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              onDoubleClick={(e) => { e.stopPropagation(); setEditingTeamName(true) }}
+              className="flex items-center gap-2 flex-1 text-left min-w-0"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-white text-xs font-bold leading-none">
+                  {team.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
+                {team.name}
+              </span>
+              <svg
+                className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
 
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
@@ -235,6 +300,15 @@ function TeamRow({
               className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors text-xs font-bold"
             >
               +
+            </button>
+            <button
+              onClick={() => setEditingTeamName(true)}
+              title="Takım adını düzenle"
+              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
             </button>
             {currentUserId === team.created_by && (
               <button
@@ -258,37 +332,65 @@ function TeamRow({
               const isActive = selectedProjectId === project.id
               return (
                 <div key={project.id} className="group/proj relative flex items-center my-0.5">
-                  <button
-                    onClick={() => onSelectProject(project, team)}
-                    className={`flex-1 text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-2 min-w-0 ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    <svg
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  {editingProjectId === project.id ? (
+                    <input
+                      autoFocus
+                      value={projectNameValue}
+                      onChange={(e) => setProjectNameValue(e.target.value)}
+                      onBlur={() => handleSaveProjectName(project)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveProjectName(project)
+                        if (e.key === 'Escape') setEditingProjectId(null)
+                      }}
+                      className="flex-1 text-xs font-medium border-b border-blue-500 outline-none bg-transparent text-gray-700 dark:text-gray-300 px-3 py-1"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => onSelectProject(project, team)}
+                      onDoubleClick={(e) => { e.stopPropagation(); setEditingProjectId(project.id); setProjectNameValue(project.name) }}
+                      className={`flex-1 text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-2 min-w-0 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+                      }`}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    <span className="truncate font-medium text-xs">{project.name}</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeleteProject(project) }}
-                    title="Projeyi sil"
-                    className={`absolute right-1 w-5 h-5 flex items-center justify-center rounded transition-all opacity-0 group-hover/proj:opacity-100 ${
-                      isActive
-                        ? 'text-blue-200 hover:text-white hover:bg-blue-500'
-                        : 'text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
-                    }`}
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                      <svg
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      <span className="truncate font-medium text-xs">{project.name}</span>
+                    </button>
+                  )}
+                  <div className={`absolute right-1 flex items-center gap-0.5 opacity-0 group-hover/proj:opacity-100 transition-opacity`}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingProjectId(project.id); setProjectNameValue(project.name) }}
+                      title="Proje adını düzenle"
+                      className={`w-5 h-5 flex items-center justify-center rounded transition-all ${
+                        isActive ? 'text-blue-200 hover:text-white hover:bg-blue-500' : 'text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+                      }`}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteProject(project) }}
+                      title="Projeyi sil"
+                      className={`w-5 h-5 flex items-center justify-center rounded transition-all ${
+                        isActive
+                          ? 'text-blue-200 hover:text-white hover:bg-blue-500'
+                          : 'text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                      }`}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -333,9 +435,10 @@ interface Props {
   onJoinTeam: () => void
   onCreateProject: (team: Team) => void
   onInvite: (team: Team) => void
+  onProjectDeleted: (projectId: string) => void
 }
 
-export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJoinTeam, onCreateProject, onInvite }: Props) {
+export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJoinTeam, onCreateProject, onInvite, onProjectDeleted }: Props) {
   const { data: teams, isLoading } = useMyTeams()
   const { user } = useAuth()
 
@@ -381,6 +484,7 @@ export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJo
                 onSelectProject={onSelectProject}
                 onCreateProject={onCreateProject}
                 onInvite={onInvite}
+                onProjectDeleted={onProjectDeleted}
               />
             ))}
           </div>

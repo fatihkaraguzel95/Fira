@@ -155,6 +155,14 @@ export function TicketModal({ projectId }: Props) {
           <div className="flex-1 min-h-0 flex">
             {/* Main */}
             <div className="flex-1 overflow-y-auto p-7 space-y-7 border-r border-gray-100 dark:border-gray-800 scrollbar-thin">
+              {/* Tags */}
+              {projectId && (
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">Taglar</h4>
+                  <TagSelector ticketId={ticket.id} projectId={projectId} assignedTags={tags} />
+                </div>
+              )}
+
               {/* Description */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide text-xs">Açıklama</h4>
@@ -183,14 +191,6 @@ export function TicketModal({ projectId }: Props) {
 
               {/* Subtasks */}
               <SubTaskList ticketId={ticket.id} ticketTitle={ticket.title} canEdit={canEdit} />
-
-              {/* Tags */}
-              {projectId && (
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">Taglar</h4>
-                  <TagSelector ticketId={ticket.id} projectId={projectId} assignedTags={tags} />
-                </div>
-              )}
 
               <AttachmentUpload ticketId={ticket.id} />
               <CommentSection ticketId={ticket.id} />

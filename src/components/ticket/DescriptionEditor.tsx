@@ -118,6 +118,15 @@ export function DescriptionEditor({
       onBlur?.()
     },
     editorProps: {
+      handleKeyDown(view, event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          requestAnimationFrame(() => {
+            if (view.isDestroyed) return
+            view.dispatch(view.state.tr.setStoredMarks([]))
+          })
+        }
+        return false
+      },
       handlePaste(view, event) {
         const items = Array.from(event.clipboardData?.items ?? [])
         const imageItem = items.find(i => i.type.startsWith('image/'))
@@ -207,18 +216,18 @@ export function DescriptionEditor({
   // ── Edit mode (TipTap) ────────────────────────────────────────────────────────
   return (
     <>
-      <div className="border border-blue-300 dark:border-blue-700 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
-        {/* Toolbar */}
-        <div className="flex items-center gap-0.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 flex-wrap">
+      <div className="relative">
+        {/* Sticky Toolbar */}
+        <div className="sticky top-0 z-10 flex items-center gap-0.5 px-2 py-1 bg-white dark:bg-gray-900 border border-blue-300 dark:border-blue-700 border-b-gray-200 dark:border-b-gray-700 rounded-t-lg flex-wrap border-b">
           <ToolbarBtn
             label={<strong>B</strong>}
-            title="Kalın (Ctrl+B)"
+            title="Kalın"
             active={editor?.isActive('bold')}
             onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBold().run() }}
           />
           <ToolbarBtn
             label={<em>I</em>}
-            title="İtalik (Ctrl+I)"
+            title="İtalik"
             active={editor?.isActive('italic')}
             onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleItalic().run() }}
           />
@@ -230,7 +239,7 @@ export function DescriptionEditor({
           />
           <ToolbarBtn
             label={<code className="font-mono text-xs">`</code>}
-            title="Kod (Ctrl+`)"
+            title="Kod"
             active={editor?.isActive('code')}
             onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleCode().run() }}
           />
@@ -262,11 +271,13 @@ export function DescriptionEditor({
         </div>
 
         {/* Editor */}
-        <EditorContent
-          editor={editor}
-          className="tiptap-editor"
-          style={{ minHeight }}
-        />
+        <div className="border border-blue-300 dark:border-blue-700 border-t-0 rounded-b-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 focus-within:border-blue-400">
+          <EditorContent
+            editor={editor}
+            className="tiptap-editor"
+            style={{ minHeight }}
+          />
+        </div>
       </div>
       {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </>

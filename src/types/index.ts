@@ -76,6 +76,7 @@ export interface Ticket {
   assignee_id: string | null  // legacy single assignee
   project_id: string | null
   due_date: string | null
+  archived_at: string | null
   created_by: string
   updated_by: string | null
   created_at: string
@@ -171,6 +172,7 @@ export interface TicketFilters {
   assignee_id?: string
   search?: string
   project_id?: string
+  include_archived?: boolean
 }
 
 export type ViewMode = 'board' | 'list'

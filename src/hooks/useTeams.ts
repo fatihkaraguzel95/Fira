@@ -73,6 +73,19 @@ export function useDeleteTeam() {
   })
 }
 
+// ─── Update team name ─────────────────────────────────────────────────────────
+export function useUpdateTeam() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { data, error } = await supabase.from('teams').update({ name }).eq('id', id).select()
+      if (error) throw error
+      if (!data || data.length === 0) throw new Error('Takım adı değiştirilemedi')
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['teams'] }),
+  })
+}
+
 // ─── Create team ──────────────────────────────────────────────────────────────
 export function useCreateTeam() {
   const qc = useQueryClient()

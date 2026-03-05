@@ -35,6 +35,21 @@ export function useCreateTag() {
   })
 }
 
+export function useUpdateTag() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, projectId, name, color }: { id: string; projectId: string; name?: string; color?: string }) => {
+      const { error } = await supabase.from('tags').update({ name, color }).eq('id', id)
+      if (error) throw error
+      return projectId
+    },
+    onSuccess: (_d, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ['tags', projectId] })
+      qc.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
 export function useDeleteTag() {
   const qc = useQueryClient()
   return useMutation({
@@ -43,7 +58,10 @@ export function useDeleteTag() {
       if (error) throw error
       return projectId
     },
-    onSuccess: (_d, { projectId }) => qc.invalidateQueries({ queryKey: ['tags', projectId] }),
+    onSuccess: (_d, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ['tags', projectId] })
+      qc.invalidateQueries({ queryKey: ['tickets'] })
+    },
   })
 }
 

@@ -10,6 +10,7 @@ interface Props {
   onViewChange: (v: ViewMode) => void;
   onNewTicket: () => void;
   onShowWhatsNew: () => void;
+  onOpenProfile: () => void;
   currentUserProfile: {
     id: string;
     email: string;
@@ -25,6 +26,7 @@ export function Header({
   onViewChange,
   onNewTicket,
   onShowWhatsNew,
+  onOpenProfile,
   currentUserProfile,
   project,
   team,
@@ -139,11 +141,16 @@ export function Header({
 
         {currentUserProfile && (
           <div className="flex items-center gap-2">
-            <UserAvatar
-              user={currentUserProfile as Parameters<typeof UserAvatar>[0]["user"]}
-              size="sm"
-              showName
-            />
+            <button
+              onClick={onOpenProfile}
+              className="flex items-center gap-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-1.5 py-1 transition-colors"
+            >
+              <UserAvatar
+                user={currentUserProfile as Parameters<typeof UserAvatar>[0]["user"]}
+                size="sm"
+                showName
+              />
+            </button>
             <button
               onClick={signOut}
               className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

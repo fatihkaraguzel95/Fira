@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useTickets } from '../hooks/useTickets'
+import { useTickets, useCreateTicket } from '../hooks/useTickets'
 import { useStatuses } from '../hooks/useStatuses'
 import { Header } from '../components/layout/Header'
 import { Sidebar } from '../components/layout/Sidebar'
 import { KanbanBoard } from '../components/board/KanbanBoard'
 import { TicketList } from '../components/list/TicketList'
-import { QuickCreateModal } from '../components/ticket/QuickCreateModal'
 import { TicketModal } from '../components/ticket/TicketModal'
 import { CreateTeamModal } from '../components/team/CreateTeamModal'
 import { JoinTeamModal } from '../components/team/JoinTeamModal'
 import { InviteModal } from '../components/team/InviteModal'
 import { CreateProjectModal } from '../components/project/CreateProjectModal'
 import { WhatsNewModal } from '../components/WhatsNewModal'
+import { ProfileModal } from '../components/profile/ProfileModal'
 import type { ViewMode, Project, Team, Profile } from '../types'
 import { supabase } from '../lib/supabase'
 
@@ -24,10 +24,11 @@ function getWhatsNewKey(userId: string) {
 export function BoardPage() {
   const { ticketId } = useParams<{ ticketId?: string }>()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [showWhatsNew, setShowWhatsNew] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
 
   const [view, setView] = useState<ViewMode>('board')
-  const [showForm, setShowForm] = useState(false)
   const [currentProject, setCurrentProject] = useState<Project | null>(null)
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null)
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null)
@@ -37,8 +38,10 @@ export function BoardPage() {
   const [inviteTarget, setInviteTarget] = useState<Team | null>(null)
   const [createProjectTarget, setCreateProjectTarget] = useState<Team | null>(null)
 
+  const createTicket = useCreateTicket()
+
   const { data: tickets = [], isLoading: ticketsLoading } = useTickets(
-    currentProject ? { project_id: currentProject.id } : undefined
+    currentProject ? { project_id: currentProject.id, include_archived: true } : undefined
   )
   const { data: statuses = [], isLoading: statusesLoading } = useStatuses(currentProject?.id ?? null)
 
@@ -79,25 +82,53 @@ export function BoardPage() {
     setShowWhatsNew(true)
   }
 
+  const handleNewTicket = async () => {
+    if (!currentProject || statuses.length === 0) return
+    const ticket = await createTicket.mutateAsync({
+      title: 'Yeni Görev',
+      status: statuses[0].name,
+      status_id: statuses[0].id,
+      priority: 'medium',
+      project_id: currentProject.id,
+    })
+    navigate(`/ticket/${(ticket as { id: string }).id}`)
+  }
+
+  const handleSelectProject = (project: Project, team: Team) => {
+    setCurrentProject(project)
+    setCurrentTeam(team)
+    localStorage.setItem('lastProjectId', project.id)
+    localStorage.setItem('lastTeamId', team.id)
+  }
+
   const isLoading = ticketsLoading || statusesLoading
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-950">
       <Sidebar
         selectedProjectId={currentProject?.id ?? null}
-        onSelectProject={(project, team) => { setCurrentProject(project); setCurrentTeam(team) }}
+        onSelectProject={handleSelectProject}
         onCreateTeam={() => setShowCreateTeam(true)}
         onJoinTeam={() => setShowJoinTeam(true)}
         onCreateProject={(team) => setCreateProjectTarget(team)}
         onInvite={(team) => setInviteTarget(team)}
+        onProjectDeleted={(projectId) => {
+          if (currentProject?.id === projectId) {
+            setCurrentProject(null)
+            setCurrentTeam(null)
+            localStorage.removeItem('lastProjectId')
+            localStorage.removeItem('lastTeamId')
+          }
+        }}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           view={view}
           onViewChange={setView}
-          onNewTicket={() => setShowForm(true)}
+          onNewTicket={handleNewTicket}
           onShowWhatsNew={handleShowWhatsNew}
+          onOpenProfile={() => setShowProfile(true)}
           currentUserProfile={currentUserProfile}
           project={currentProject}
           team={currentTeam}
@@ -126,14 +157,6 @@ export function BoardPage() {
 
       {ticketId && <TicketModal projectId={currentProject?.id ?? null} />}
 
-      {showForm && currentProject && statuses.length > 0 && (
-        <QuickCreateModal
-          onClose={() => setShowForm(false)}
-          statuses={statuses}
-          projectId={currentProject.id}
-        />
-      )}
-
       {showCreateTeam && <CreateTeamModal onClose={() => setShowCreateTeam(false)} />}
       {showJoinTeam && <JoinTeamModal onClose={() => setShowJoinTeam(false)} />}
       {inviteTarget && <InviteModal team={inviteTarget} onClose={() => setInviteTarget(null)} />}
@@ -145,6 +168,12 @@ export function BoardPage() {
       )}
 
       {showWhatsNew && <WhatsNewModal onClose={handleCloseWhatsNew} />}
+      {showProfile && (
+        <ProfileModal
+          onClose={() => setShowProfile(false)}
+          onUpdated={(profile) => setCurrentUserProfile(profile)}
+        />
+      )}
     </div>
   )
 }
