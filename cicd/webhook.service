@@ -1,0 +1,14 @@
+[Unit]
+Description=Fira GitHub Webhook Listener
+After=network.target
+
+[Service]
+User=sakgun
+ExecStart=/usr/bin/webhook -hooks /home/sakgun/Fira/cicd/hooks.json -port 9000 -verbose -hotreload
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
