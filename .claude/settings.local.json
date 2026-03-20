@@ -27,7 +27,8 @@
       "Bash(xargs -I {} head -40 {})",
       "WebFetch(domain:github.com)",
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

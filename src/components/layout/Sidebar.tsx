@@ -22,27 +22,27 @@ function DeleteTeamModal({ team, onClose, onConfirm }: { team: Team; onClose: ()
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-gray-100">Takımı Sil</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bu işlem geri alınamaz</p>
+            <h3 className="font-bold text-slate-900 dark:text-gray-100">Takımı Sil</h3>
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">Bu işlem geri alınamaz</p>
           </div>
         </div>
 
         {step === 'confirm' ? (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">"{team.name}"</span> takımını silmek istediğinden emin misin?
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-6">
+              <span className="font-semibold text-slate-900 dark:text-gray-100">"{team.name}"</span> takımını silmek istediğinden emin misin?
               Tüm projeler ve veriler kalıcı olarak silinecek.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Vazgeç
               </button>
               <button
                 onClick={() => setStep('type')}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Evet, devam et
               </button>
@@ -50,10 +50,10 @@ function DeleteTeamModal({ team, onClose, onConfirm }: { team: Team; onClose: ()
           </>
         ) : (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-3">
               Onaylamak için aşağıya tam olarak şunu yaz:
             </p>
-            <p className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 mb-3 select-all">
+            <p className="text-sm font-mono font-semibold text-slate-800 dark:text-gray-200 bg-slate-50 dark:bg-gray-800 rounded-xl px-3 py-2 mb-3 select-all">
               eminim {team.name}
             </p>
             <input
@@ -61,19 +61,19 @@ function DeleteTeamModal({ team, onClose, onConfirm }: { team: Team; onClose: ()
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={`eminim ${team.name}`}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-transparent dark:text-gray-200 mb-4"
+              className="w-full border border-slate-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-transparent dark:text-gray-200 mb-4"
             />
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Vazgeç
               </button>
               <button
                 onClick={onConfirm}
                 disabled={!matches}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Takımı Sil
               </button>
@@ -103,27 +103,27 @@ function DeleteProjectModal({ project, onClose, onConfirm }: { project: Project;
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-gray-100">Projeyi Sil</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bu işlem geri alınamaz</p>
+            <h3 className="font-bold text-slate-900 dark:text-gray-100">Projeyi Sil</h3>
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">Bu işlem geri alınamaz</p>
           </div>
         </div>
 
         {step === 'confirm' ? (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">"{project.name}"</span> projesini silmek istediğinden emin misin?
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-6">
+              <span className="font-semibold text-slate-900 dark:text-gray-100">"{project.name}"</span> projesini silmek istediğinden emin misin?
               Tüm ticketlar ve veriler kalıcı olarak silinecek.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Vazgeç
               </button>
               <button
                 onClick={() => setStep('type')}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Evet, devam et
               </button>
@@ -131,10 +131,10 @@ function DeleteProjectModal({ project, onClose, onConfirm }: { project: Project;
           </>
         ) : (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-3">
               Onaylamak için aşağıya tam olarak şunu yaz:
             </p>
-            <p className="text-sm font-mono font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 mb-3 select-all">
+            <p className="text-sm font-mono font-semibold text-slate-800 dark:text-gray-200 bg-slate-50 dark:bg-gray-800 rounded-xl px-3 py-2 mb-3 select-all">
               eminim {project.name}
             </p>
             <input
@@ -142,19 +142,19 @@ function DeleteProjectModal({ project, onClose, onConfirm }: { project: Project;
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={`eminim ${project.name}`}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-transparent dark:text-gray-200 mb-4"
+              className="w-full border border-slate-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-transparent dark:text-gray-200 mb-4"
             />
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-xl text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-gray-700 text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Vazgeç
               </button>
               <button
                 onClick={onConfirm}
                 disabled={!matches}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Projeyi Sil
               </button>
@@ -199,12 +199,10 @@ function TeamRow({
   const updateTeam = useUpdateTeam()
   const updateProject = useUpdateProject()
 
-  // Sync team name input when prop changes (e.g. after failed update refetch)
   useEffect(() => {
     if (!editingTeamName) setTeamNameValue(team.name)
   }, [team.name])
 
-  // Auto-restore last selected project on mount
   useEffect(() => {
     if (!projects || selectedProjectId) return
     const savedId = localStorage.getItem('lastProjectId')
@@ -257,7 +255,7 @@ function TeamRow({
       )}
       <div className="mb-1">
         {/* Team header */}
-        <div className="flex items-center gap-1 px-3 py-1.5 group rounded-lg mx-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <div className="flex items-center gap-1 px-3 py-1.5 group rounded-xl mx-2 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors">
           {editingTeamName ? (
             <input
               autoFocus
@@ -268,7 +266,7 @@ function TeamRow({
                 if (e.key === 'Enter') handleSaveTeamName()
                 if (e.key === 'Escape') { setTeamNameValue(team.name); setEditingTeamName(false) }
               }}
-              className="flex-1 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-blue-500 outline-none bg-transparent"
+              className="flex-1 text-xs font-semibold text-slate-700 dark:text-gray-300 uppercase tracking-wide border-b border-primary-500 outline-none bg-transparent"
             />
           ) : (
             <button
@@ -276,16 +274,16 @@ function TeamRow({
               onDoubleClick={(e) => { e.stopPropagation(); setEditingTeamName(true) }}
               className="flex items-center gap-2 flex-1 text-left min-w-0"
             >
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <span className="text-white text-xs font-bold leading-none">
                   {team.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
+              <span className="text-xs font-semibold text-slate-700 dark:text-gray-300 uppercase tracking-wide truncate">
                 {team.name}
               </span>
               <svg
-                className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                className={`w-3 h-3 text-slate-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -297,14 +295,14 @@ function TeamRow({
             <button
               onClick={() => onInvite(team)}
               title="Üye davet et"
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors text-xs font-bold"
+              className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors text-xs font-bold"
             >
               +
             </button>
             <button
               onClick={() => setEditingTeamName(true)}
               title="Takım adını düzenle"
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -314,7 +312,7 @@ function TeamRow({
               <button
                 onClick={() => setShowDelete(true)}
                 title="Takımı sil"
-                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                className="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -327,7 +325,7 @@ function TeamRow({
 
         {/* Projects */}
         {expanded && (
-          <div className="ml-4 mr-2 mt-0.5 mb-1 pl-4 border-l-2 border-gray-100 dark:border-gray-800">
+          <div className="ml-4 mr-2 mt-0.5 mb-1 pl-4 border-l-2 border-slate-100 dark:border-gray-800">
             {projects?.map((project) => {
               const isActive = selectedProjectId === project.id
               return (
@@ -342,7 +340,7 @@ function TeamRow({
                         if (e.key === 'Enter') handleSaveProjectName(project)
                         if (e.key === 'Escape') setEditingProjectId(null)
                       }}
-                      className="flex-1 text-xs font-medium border-b border-blue-500 outline-none bg-transparent text-gray-700 dark:text-gray-300 px-3 py-1"
+                      className="flex-1 text-xs font-medium border-b border-primary-500 outline-none bg-transparent text-slate-700 dark:text-gray-300 px-3 py-1"
                     />
                   ) : (
                     <button
@@ -350,12 +348,12 @@ function TeamRow({
                       onDoubleClick={(e) => { e.stopPropagation(); setEditingProjectId(project.id); setProjectNameValue(project.name) }}
                       className={`flex-1 text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-2 min-w-0 ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/30 dark:text-primary-300 font-semibold'
+                          : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-900 dark:hover:text-gray-200'
                       }`}
                     >
                       <svg
-                        className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-400 dark:text-gray-500'}`}
                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -364,12 +362,14 @@ function TeamRow({
                       <span className="truncate font-medium text-xs">{project.name}</span>
                     </button>
                   )}
-                  <div className={`absolute right-1 flex items-center gap-0.5 opacity-0 group-hover/proj:opacity-100 transition-opacity`}>
+                  <div className="absolute right-1 flex items-center gap-0.5 opacity-0 group-hover/proj:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingProjectId(project.id); setProjectNameValue(project.name) }}
                       title="Proje adını düzenle"
                       className={`w-5 h-5 flex items-center justify-center rounded transition-all ${
-                        isActive ? 'text-blue-200 hover:text-white hover:bg-blue-500' : 'text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+                        isActive
+                          ? 'text-primary-400 hover:text-primary-700 hover:bg-primary-100 dark:hover:bg-primary-950/50'
+                          : 'text-slate-300 dark:text-gray-600 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
                       }`}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,8 +381,8 @@ function TeamRow({
                       title="Projeyi sil"
                       className={`w-5 h-5 flex items-center justify-center rounded transition-all ${
                         isActive
-                          ? 'text-blue-200 hover:text-white hover:bg-blue-500'
-                          : 'text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
+                          ? 'text-primary-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                          : 'text-slate-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
                       }`}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,7 +397,7 @@ function TeamRow({
 
             <button
               onClick={() => onCreateProject(team)}
-              className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors flex items-center gap-2 my-0.5"
+              className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/20 transition-colors flex items-center gap-2 my-0.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -440,7 +440,17 @@ interface Props {
   onClose?: () => void
 }
 
-export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJoinTeam, onCreateProject, onInvite, onProjectDeleted, isOpen = false, onClose }: Props) {
+export function Sidebar({
+  selectedProjectId,
+  onSelectProject,
+  onCreateTeam,
+  onJoinTeam,
+  onCreateProject,
+  onInvite,
+  onProjectDeleted,
+  isOpen = false,
+  onClose,
+}: Props) {
   const { data: teams, isLoading } = useMyTeams()
   const { user } = useAuth()
 
@@ -454,105 +464,104 @@ export function Sidebar({ selectedProjectId, onSelectProject, onCreateTeam, onJo
         onClick={onClose}
       />
 
-    <aside className={[
-      // Mobile: fixed slide-in drawer
-      'fixed inset-y-0 left-0 z-40 w-72',
-      'transform transition-transform duration-300 ease-out',
-      isOpen ? 'translate-x-0' : '-translate-x-full',
-      // Desktop: static in flex layout
-      'md:static md:inset-auto md:z-auto md:w-60 md:flex-shrink-0 md:translate-x-0 md:h-full',
-      'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col',
-    ].join(' ')}>
-      {/* Logo + mobile close button */}
-      <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
+      <aside className={[
+        'fixed inset-y-0 left-0 z-40 w-72',
+        'transform transition-transform duration-300 ease-out',
+        isOpen ? 'translate-x-0' : '-translate-x-full',
+        'md:static md:inset-auto md:z-auto md:w-60 md:flex-shrink-0 md:translate-x-0 md:h-full',
+        'bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-gray-800 flex flex-col',
+      ].join(' ')}>
+
+        {/* Logo + mobile close */}
+        <div className="px-4 py-4 border-b border-slate-100 dark:border-gray-800 flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm flex-shrink-0">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <span className="text-base font-bold text-slate-900 dark:text-gray-100 flex-1 tracking-tight">Fira</span>
+          {/* Close button — mobile only */}
+          <button
+            onClick={onClose}
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Menüyü kapat"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <span className="text-base font-bold text-gray-900 dark:text-gray-100 flex-1">Fira</span>
-        {/* Close button — mobile only */}
-        <button
-          onClick={onClose}
-          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label="Menüyü kapat"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
 
-      {/* Teams section label */}
-      <div className="px-4 pt-4 pb-1">
-        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-          Takımlar
-        </p>
-      </div>
+        {/* Teams section label */}
+        <div className="px-4 pt-4 pb-1">
+          <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-widest">
+            Takımlar
+          </p>
+        </div>
 
-      {/* Team list */}
-      <div className="flex-1 overflow-y-auto py-1 scrollbar-thin">
-        {isLoading ? (
-          <div className="px-4 py-3 space-y-2.5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-gray-800 animate-pulse flex-shrink-0" />
-                <div className="h-3 flex-1 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : teams && teams.length > 0 ? (
-          <div>
-            {teams.map((team) => (
-              <TeamRow
-                key={team.id}
-                team={team}
-                selectedProjectId={selectedProjectId}
-                currentUserId={user?.id ?? null}
-                onSelectProject={onSelectProject}
-                onCreateProject={onCreateProject}
-                onInvite={onInvite}
-                onProjectDeleted={onProjectDeleted}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="px-4 py-8 text-center">
-            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+        {/* Team list */}
+        <div className="flex-1 overflow-y-auto py-1 scrollbar-thin">
+          {isLoading ? (
+            <div className="px-4 py-3 space-y-2.5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-gray-800 animate-pulse flex-shrink-0" />
+                  <div className="h-3 flex-1 bg-slate-100 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">Henüz takımın yok</p>
-            <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">Aşağıdan oluştur veya katıl</p>
-          </div>
-        )}
-      </div>
+          ) : teams && teams.length > 0 ? (
+            <div>
+              {teams.map((team) => (
+                <TeamRow
+                  key={team.id}
+                  team={team}
+                  selectedProjectId={selectedProjectId}
+                  currentUserId={user?.id ?? null}
+                  onSelectProject={onSelectProject}
+                  onCreateProject={onCreateProject}
+                  onInvite={onInvite}
+                  onProjectDeleted={onProjectDeleted}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-gray-500 font-medium">Henüz takımın yok</p>
+              <p className="text-xs text-slate-400 dark:text-gray-600 mt-0.5">Aşağıdan oluştur veya katıl</p>
+            </div>
+          )}
+        </div>
 
-      {/* Bottom actions */}
-      <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-2">
-        <button
-          onClick={onCreateTeam}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-          </svg>
-          Takım Oluştur
-        </button>
-        <button
-          onClick={onJoinTeam}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 hover:border-gray-300 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-          </svg>
-          Koda Göre Katıl
-        </button>
-      </div>
-    </aside>
+        {/* Bottom actions */}
+        <div className="border-t border-slate-100 dark:border-gray-800 p-3 space-y-2">
+          <button
+            onClick={onCreateTeam}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-700 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            Takım Oluştur
+          </button>
+          <button
+            onClick={onJoinTeam}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-50 dark:bg-gray-800 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-700 hover:bg-slate-100 dark:hover:bg-gray-700 hover:border-slate-300 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            Koda Göre Katıl
+          </button>
+        </div>
+      </aside>
     </>
   )
 }

@@ -3,25 +3,28 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    box-sizing: border-box;
+  * { box-sizing: border-box; }
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    line-height: 1.5;
   }
-  button, a, [role="button"] {
-    touch-action: manipulation;
-  }
-  /* Safe area padding for notch/Dynamic Island devices */
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  button, a, [role="button"] { touch-action: manipulation; }
+  :focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
   }
 }
 
-/* ── Dark mode: form element overrides ──────────────────────────────────────── */
+/* ── Dark mode ──────────────────────────────────────────────────────────────── */
+.dark body { @apply bg-gray-950 text-slate-100; }
+
 .dark input[type="text"],
 .dark input[type="email"],
 .dark input[type="password"],
@@ -34,157 +37,98 @@
   color: #f9fafb;
   color-scheme: dark;
 }
-
 .dark input::placeholder,
-.dark textarea::placeholder {
-  color: #6b7280;
-}
+.dark textarea::placeholder { color: #6b7280; }
+.dark [contenteditable] { color: #f9fafb; }
 
-/* contenteditable (used only in legacy places) */
-.dark [contenteditable] {
-  color: #f9fafb;
-}
-
-/* Placeholder for contenteditable (no React state needed) */
 [contenteditable][data-empty="true"]::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: #94a3b8;
   pointer-events: none;
   float: left;
   height: 0;
 }
-.dark [contenteditable][data-empty="true"]::before {
-  color: #6b7280;
-}
+.dark [contenteditable][data-empty="true"]::before { color: #6b7280; }
 
-/* ── TipTap editor styles ───────────────────────────────────────────────────── */
+/* ── TipTap ─────────────────────────────────────────────────────────────────── */
 .tiptap-editor .ProseMirror {
   padding: 10px 12px;
   min-height: inherit;
   outline: none;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.7;
-  color: #111827;
+  color: #0f172a;
 }
-.dark .tiptap-editor .ProseMirror {
-  color: #f9fafb;
-}
+.dark .tiptap-editor .ProseMirror { color: #f1f5f9; }
 
 .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: #94a3b8;
   pointer-events: none;
   float: left;
   height: 0;
 }
-.dark .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
-  color: #6b7280;
-}
+.dark .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before { color: #6b7280; }
 
 .tiptap-editor .ProseMirror strong { font-weight: 600; }
 .tiptap-editor .ProseMirror em { font-style: italic; }
 .tiptap-editor .ProseMirror s { text-decoration: line-through; }
 
 .tiptap-editor .ProseMirror code {
-  background: #f3f4f6;
+  background: #f1f5f9;
   border-radius: 4px;
   padding: 1px 6px;
   font-family: ui-monospace, monospace;
   font-size: 0.8em;
+  color: #4f46e5;
 }
-.dark .tiptap-editor .ProseMirror code {
-  background: #1f2937;
-}
+.dark .tiptap-editor .ProseMirror code { background: #1e293b; color: #a5b4fc; }
 
 .tiptap-editor .ProseMirror pre {
-  background: #f3f4f6;
-  border-radius: 6px;
-  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 14px;
   overflow-x: auto;
   font-family: ui-monospace, monospace;
-  font-size: 0.8em;
+  font-size: 0.825em;
+  border: 1px solid #e2e8f0;
 }
-.dark .tiptap-editor .ProseMirror pre {
-  background: #1f2937;
-}
+.dark .tiptap-editor .ProseMirror pre { background: #1e293b; border-color: #334155; }
 
-.tiptap-editor .ProseMirror ul {
-  list-style-type: disc;
-  padding-left: 1.25rem;
-}
-.tiptap-editor .ProseMirror ol {
-  list-style-type: decimal;
-  padding-left: 1.25rem;
-}
+.tiptap-editor .ProseMirror ul { list-style-type: disc; padding-left: 1.25rem; }
+.tiptap-editor .ProseMirror ol { list-style-type: decimal; padding-left: 1.25rem; }
 .tiptap-editor .ProseMirror li { margin: 2px 0; }
 
-/* Task list (checkboxes) */
-.tiptap-editor .ProseMirror ul[data-type="taskList"] {
-  list-style: none;
-  padding-left: 0;
-}
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label {
-  flex-shrink: 0;
-  margin-top: 3px;
-  cursor: pointer;
-}
+.tiptap-editor .ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label { flex-shrink: 0; margin-top: 3px; cursor: pointer; }
 .tiptap-editor .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
-  accent-color: #3b82f6;
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
+  accent-color: #4f46e5; width: 14px; height: 14px; cursor: pointer;
 }
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li > div {
-  flex: 1;
-}
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > div { flex: 1; }
 .tiptap-editor .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
-  text-decoration: line-through;
-  color: #9ca3af;
+  text-decoration: line-through; color: #94a3b8;
 }
 
-/* Images */
 .tiptap-editor .ProseMirror img {
-  max-height: 320px;
-  max-width: 100%;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  margin: 6px 0;
-  display: block;
-  object-fit: contain;
-  cursor: zoom-in;
+  max-height: 320px; max-width: 100%; border-radius: 8px;
+  border: 1px solid #e2e8f0; margin: 6px 0; display: block;
+  object-fit: contain; cursor: zoom-in;
 }
-.dark .tiptap-editor .ProseMirror img {
-  border-color: #374151;
-}
-.tiptap-editor .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Paragraph spacing */
+.dark .tiptap-editor .ProseMirror img { border-color: #374151; }
+.tiptap-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #4f46e5; outline-offset: 2px; }
 .tiptap-editor .ProseMirror p { margin: 0 0 6px; }
 .tiptap-editor .ProseMirror p:last-child { margin-bottom: 0; }
 
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
   }
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
-  }
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-600 rounded-full;
-  }
+  .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }

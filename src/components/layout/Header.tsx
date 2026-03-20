@@ -38,13 +38,13 @@ export function Header({
   const [showStatuses, setShowStatuses] = useState(false);
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-5 py-2 md:py-3 flex items-center justify-between flex-shrink-0 gap-2">
+    <header className="bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800 px-3 md:px-5 py-2 flex items-center justify-between flex-shrink-0 gap-2">
       {/* Left */}
-      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
         {/* Hamburger — mobile only */}
         <button
           onClick={onMenuToggle}
-          className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors flex-shrink-0"
+          className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 active:bg-slate-200 dark:active:bg-gray-700 transition-colors flex-shrink-0"
           aria-label="Menüyü aç"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,44 +54,46 @@ export function Header({
 
         {project ? (
           <div className="min-w-0">
-            <p className="text-xs text-gray-400 dark:text-gray-500 truncate hidden sm:block">{team?.name}</p>
-            <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight truncate max-w-[110px] sm:max-w-[180px] md:max-w-none">
+            <p className="text-xs text-slate-400 dark:text-gray-500 truncate hidden sm:block leading-none mb-0.5">{team?.name}</p>
+            <h1 className="text-sm font-semibold text-slate-800 dark:text-gray-100 leading-tight truncate max-w-[110px] sm:max-w-[180px] md:max-w-none">
               {project.name}
             </h1>
           </div>
         ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-500 hidden md:block">Proje seç</span>
+          <span className="text-sm text-slate-400 dark:text-gray-500 hidden md:block">Proje seç</span>
         )}
 
         {project && (
           <>
-            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* View switcher */}
+            <div className="flex rounded-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
               <button
                 onClick={() => onViewChange("board")}
                 className={`px-3 md:px-4 py-2 text-sm font-medium transition-colors min-h-[36px] ${
                   view === "board"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    ? "bg-primary-600 text-white"
+                    : "text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800"
                 }`}
               >
                 Kanban
               </button>
               <button
                 onClick={() => onViewChange("list")}
-                className={`px-3 md:px-4 py-2 text-sm font-medium transition-colors min-h-[36px] ${
+                className={`px-3 md:px-4 py-2 text-sm font-medium transition-colors min-h-[36px] border-l border-slate-200 dark:border-gray-700 ${
                   view === "list"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    ? "bg-primary-600 text-white"
+                    : "text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800"
                 }`}
               >
                 Liste
               </button>
             </div>
 
+            {/* Status manager — desktop only */}
             <div className="relative hidden md:block">
               <button
                 onClick={() => setShowStatuses(!showStatuses)}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -100,16 +102,16 @@ export function Header({
                 Durumlar
               </button>
               {showStatuses && (
-                <div className="absolute left-0 top-10 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 w-64">
+                <div className="absolute left-0 top-11 z-20 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-card-hover p-4 w-64 animate-fade-in">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      Durum Yönetimi
-                    </p>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">Durum Yönetimi</p>
                     <button
                       onClick={() => setShowStatuses(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs"
+                      className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
                     >
-                      ✕
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
                   <StatusManager projectId={project.id} />
@@ -125,7 +127,7 @@ export function Header({
         {project && (
           <button
             onClick={onNewTicket}
-            className="flex items-center gap-1.5 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors min-h-[44px] md:min-h-0 shadow-sm"
+            className="flex items-center gap-1.5 bg-primary-600 text-white px-3 md:px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-700 active:bg-primary-700 transition-colors min-h-[44px] md:min-h-[36px] shadow-sm"
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -138,7 +140,7 @@ export function Header({
         <button
           onClick={onShowWhatsNew}
           title="Yenilikler"
-          className="hidden md:flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="hidden md:flex w-9 h-9 items-center justify-center rounded-xl text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -150,7 +152,7 @@ export function Header({
         <button
           onClick={toggle}
           title={isDark ? "Açık mod" : "Karanlık mod"}
-          className="hidden md:flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="hidden md:flex w-9 h-9 items-center justify-center rounded-xl text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
         >
           {isDark ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +171,7 @@ export function Header({
           <div className="flex items-center gap-1">
             <button
               onClick={onOpenProfile}
-              className="flex items-center gap-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 px-1.5 py-1 transition-colors min-h-[44px] md:min-h-0"
+              className="flex items-center gap-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-800 px-1.5 py-1 transition-colors min-h-[44px] md:min-h-0"
             >
               <UserAvatar
                 user={currentUserProfile as Parameters<typeof UserAvatar>[0]["user"]}
@@ -179,7 +181,7 @@ export function Header({
             </button>
             <button
               onClick={signOut}
-              className="hidden md:block text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="hidden md:block text-xs text-slate-400 hover:text-slate-700 dark:hover:text-gray-300 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
             >
               Çıkış
             </button>
