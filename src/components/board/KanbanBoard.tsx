@@ -54,12 +54,14 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
 
   if (!adding) {
     return (
-      <div className="flex-shrink-0 flex items-start pt-1">
+      <div className="flex-shrink-0 w-[300px] flex items-start pt-1">
         <button
           onClick={() => setAdding(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-blue-400 dark:hover:border-blue-600 hover:text-blue-500 dark:hover:text-blue-400 transition-all text-sm font-medium whitespace-nowrap"
+          className="w-full flex items-center justify-center py-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-gray-600 text-slate-400 dark:text-gray-500 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-600 dark:hover:text-primary-400 transition-all text-sm font-medium gap-2 h-12"
         >
-          <span className="text-lg leading-none">+</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           Durum Ekle
         </button>
       </div>
@@ -67,8 +69,8 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="flex-shrink-0 min-w-[240px] bg-white dark:bg-gray-900 rounded-xl border-2 border-blue-400 dark:border-blue-600 shadow-sm p-4 space-y-3">
-      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Yeni Durum</p>
+    <div className="flex-shrink-0 w-[300px] bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-700 shadow-card p-4 space-y-3">
+      <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">Yeni Durum</p>
 
       <div className="flex flex-wrap gap-1.5">
         {COLORS.map((c) => (
@@ -98,7 +100,7 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
             if (e.key === 'Escape') setAdding(false)
           }}
           placeholder="Durum adı..."
-          className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-transparent dark:text-gray-200"
+          className="flex-1 border border-slate-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-transparent dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500"
         />
       </div>
 
@@ -106,13 +108,13 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
         <button
           onClick={handleAdd}
           disabled={!name.trim() || createStatus.isPending}
-          className="flex-1 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="flex-1 text-xs bg-primary-600 text-white px-3 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
         >
           Ekle
         </button>
         <button
           onClick={() => setAdding(false)}
-          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1.5"
+          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
         >
           İptal
         </button>
@@ -275,7 +277,7 @@ export function KanbanBoard({ tickets, statuses, projectId }: Props) {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 h-full pb-4 overflow-x-auto scrollbar-thin items-start">
+      <div className="flex gap-5 h-full pb-6 overflow-x-auto scrollbar-thin items-start">
         {statuses.map((status) => (
           <KanbanColumn
             key={status.id}
@@ -290,7 +292,7 @@ export function KanbanBoard({ tickets, statuses, projectId }: Props) {
 
       <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
         {activeTicket && (
-          <div className="rotate-1 shadow-2xl">
+          <div className="rotate-1 shadow-2xl opacity-95">
             <TicketCard ticket={activeTicket} />
           </div>
         )}

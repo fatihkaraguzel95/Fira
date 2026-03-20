@@ -8,13 +8,15 @@ interface Props {
 }
 
 const PRIORITIES: { value: TicketPriority; label: string; color: string }[] = [
-  { value: 'low',      label: 'Düşük',   color: '#3b82f6' },
+  { value: 'low',      label: 'Düşük',   color: '#94a3b8' },
   { value: 'medium',   label: 'Orta',    color: '#f59e0b' },
   { value: 'high',     label: 'Yüksek',  color: '#f97316' },
   { value: 'critical', label: 'Kritik',  color: '#ef4444' },
 ]
 
-const Divider = () => <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+const Divider = () => (
+  <div className="h-5 w-px bg-slate-200 dark:bg-gray-700 flex-shrink-0" />
+)
 
 export function TicketFilters({ filters, onChange, statuses }: Props) {
   const { data: users } = useUsers()
@@ -38,21 +40,26 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
     !!filters.search
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 mb-4 shadow-card flex flex-wrap items-center gap-x-4 gap-y-2">
       {/* Search */}
-      <input
-        type="text"
-        placeholder="Ara..."
-        value={filters.search ?? ''}
-        onChange={(e) => onChange({ ...filters, search: e.target.value || undefined })}
-        className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 w-36"
-      />
+      <div className="relative">
+        <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Ara..."
+          value={filters.search ?? ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value || undefined })}
+          className="pl-8 pr-3 py-1.5 border border-slate-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 w-36 transition-shadow"
+        />
+      </div>
 
       <Divider />
 
       {/* Status */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">Durum:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Durum:</span>
         <div className="flex gap-1 flex-wrap">
           {statuses.map((s) => {
             const active = filters.status_id?.includes(s.id)
@@ -78,7 +85,7 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
 
       {/* Priority */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">Öncelik:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Öncelik:</span>
         <div className="flex gap-1 flex-wrap">
           {PRIORITIES.map(({ value, label, color }) => {
             const active = filters.priority?.includes(value)
@@ -104,11 +111,11 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
 
       {/* Assignee */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">Kişi:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Kişi:</span>
         <select
           value={filters.assignee_id ?? ''}
           onChange={(e) => onChange({ ...filters, assignee_id: e.target.value || undefined })}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
+          className="border border-slate-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 dark:text-gray-200 transition-shadow"
         >
           <option value="">Hepsi</option>
           {users?.map((u) => (
@@ -122,9 +129,12 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
           <Divider />
           <button
             onClick={() => onChange({ project_id: filters.project_id })}
-            className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1"
+            className="text-xs text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1 font-medium"
           >
-            ✕ Temizle
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Temizle
           </button>
         </>
       )}

@@ -1,18 +1,18 @@
 import type { TicketPriority } from '../../types'
 import { PRIORITY_LABELS } from '../../types'
 
-const styles: Record<TicketPriority, string> = {
-  low: 'bg-gray-100 text-gray-600',
-  medium: 'bg-blue-100 text-blue-700',
-  high: 'bg-orange-100 text-orange-700',
-  critical: 'bg-red-100 text-red-700',
+const dotColor: Record<TicketPriority, string> = {
+  low:      '#94a3b8',
+  medium:   '#f59e0b',
+  high:     '#f97316',
+  critical: '#ef4444',
 }
 
-const icons: Record<TicketPriority, string> = {
-  low: '↓',
-  medium: '→',
-  high: '↑',
-  critical: '⚡',
+const badgeStyles: Record<TicketPriority, string> = {
+  low:      'bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400',
+  medium:   'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400',
+  high:     'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400',
+  critical: 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400',
 }
 
 interface Props {
@@ -21,10 +21,15 @@ interface Props {
 }
 
 export function PriorityBadge({ priority, size = 'sm' }: Props) {
-  const sizeClass = size === 'sm' ? 'text-xs px-1.5 py-0.5' : 'text-sm px-2 py-1'
+  const sizeClass = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1'
   return (
-    <span className={`inline-flex items-center gap-1 rounded font-medium ${styles[priority]} ${sizeClass}`}>
-      <span>{icons[priority]}</span>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-md font-medium ${badgeStyles[priority]} ${sizeClass}`}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ backgroundColor: dotColor[priority] }}
+      />
       {PRIORITY_LABELS[priority]}
     </span>
   )
