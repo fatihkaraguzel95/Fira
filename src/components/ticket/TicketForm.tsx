@@ -4,6 +4,7 @@ import { useCreateTicket } from '../../hooks/useTickets'
 import { useUsers } from '../../hooks/useUsers'
 import { DescriptionEditor } from './DescriptionEditor'
 import { PriorityPicker } from './PriorityPicker'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   onClose: () => void
@@ -12,10 +13,10 @@ interface Props {
 }
 
 export function TicketForm({ onClose, statuses, projectId }: Props) {
+  const { t } = useTranslation()
   const { mutateAsync: createTicket, isPending } = useCreateTicket()
   const { data: users } = useUsers()
 
-  // Temp id for image uploads before ticket exists
   const uploadId = useRef(crypto.randomUUID())
 
   const [title, setTitle] = useState('')
@@ -52,7 +53,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
-          <h2 className="text-lg font-semibold text-gray-900">Yeni Ticket</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('ticket.newTicket')}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
         </div>
 
@@ -63,26 +64,26 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
               {/* Title */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Başlık <span className="text-red-500">*</span>
+                  {t('ticket.title')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ticket başlığı..."
+                  placeholder={t('ticket.titlePlaceholder')}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Açıklama</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('ticket.description')}</label>
                 <DescriptionEditor
                   value={description}
                   onChange={setDescription}
                   ticketId={uploadId.current}
-                  placeholder="Detayları yazın… (Ctrl+V ile ekran görüntüsü ekleyebilirsiniz)"
+                  placeholder={t('ticket.descriptionPlaceholder')}
                   minHeight="180px"
                 />
               </div>
@@ -92,7 +93,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
             <div className="w-56 flex-shrink-0 p-5 space-y-5">
               {/* Status */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Durum</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.status')}</label>
                 <select
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
@@ -106,13 +107,13 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
 
               {/* Priority */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Öncelik</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.priority')}</label>
                 <PriorityPicker value={priority} onChange={(p) => setPriority(p as TicketPriority)} />
               </div>
 
               {/* Assignees */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Atananlar</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.assignees')}</label>
                 <div className="border border-gray-200 rounded-lg p-2 max-h-36 overflow-y-auto space-y-1">
                   {users?.map((u) => (
                     <label key={u.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5">
@@ -125,13 +126,13 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
                       <span className="text-sm text-gray-700">{u.full_name || u.email}</span>
                     </label>
                   ))}
-                  {!users?.length && <p className="text-xs text-gray-400">Kullanıcı yok</p>}
+                  {!users?.length && <p className="text-xs text-gray-400">{t('ticket.noUsers')}</p>}
                 </div>
               </div>
 
               {/* Due Date */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Bitiş Tarihi</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.dueDate')}</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -149,14 +150,14 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
             >
-              İptal
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {isPending ? 'Oluşturuluyor…' : 'Oluştur'}
+              {isPending ? t('common.creating') : t('common.create')}
             </button>
           </div>
         </form>

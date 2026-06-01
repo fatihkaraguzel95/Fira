@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import type { Profile } from '../../types'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   onClose: () => void
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ProfileModal({ onClose, onUpdated }: Props) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [fullName, setFullName] = useState('')
@@ -59,7 +61,7 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
       const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(path)
       setAvatarUrl(`${publicUrl}?t=${Date.now()}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Yükleme hatası')
+      setError(err instanceof Error ? err.message : t('profile.errors.uploadError'))
     } finally {
       setUploading(false)
     }
@@ -73,13 +75,13 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
       const updates: Partial<Profile> = { full_name: fullName.trim() || null, avatar_url: avatarUrl }
       const { data: updateResult, error: updateError } = await supabase.from('profiles').update(updates).eq('id', profile.id).select()
       if (updateError) throw updateError
-      if (!updateResult || updateResult.length === 0) throw new Error('Profil güncellenemedi')
+      if (!updateResult || updateResult.length === 0) throw new Error(t('profile.errors.saveError'))
       const updated = { ...profile, ...updates } as Profile
       onUpdated(updated)
       qc.invalidateQueries({ queryKey: ['tickets'] })
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Kaydetme hatası')
+      setError(err instanceof Error ? err.message : t('profile.errors.saveError'))
     } finally {
       setSaving(false)
     }
@@ -88,9 +90,9 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
   const handleChangePassword = async () => {
     setPwError(null)
     setPwSuccess(false)
-    if (!newPassword) { setPwError('Yeni şifre boş olamaz'); return }
-    if (newPassword !== confirmPassword) { setPwError('Şifreler eşleşmiyor'); return }
-    if (newPassword.length < 6) { setPwError('Şifre en az 6 karakter olmalı'); return }
+    if (!newPassword) { setPwError(t('profile.errors.passwordEmpty')); return }
+    if (newPassword !== confirmPassword) { setPwError(t('profile.errors.passwordMismatch')); return }
+    if (newPassword.length < 6) { setPwError(t('profile.errors.passwordTooShort')); return }
     setChangingPw(true)
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
@@ -100,7 +102,7 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
       setNewPassword('')
       setConfirmPassword('')
     } catch (err: unknown) {
-      setPwError(err instanceof Error ? err.message : 'Şifre değiştirme hatası')
+      setPwError(err instanceof Error ? err.message : t('profile.errors.passwordEmpty'))
     } finally {
       setChangingPw(false)
     }
@@ -117,7 +119,7 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
     >
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profil</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('profile.title')}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg leading-none">✕</button>
         </div>
 
@@ -143,7 +145,7 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
               disabled={uploading}
               className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
             >
-              Fotoğraf yükle
+              {uploading ? t('profile.uploading') : t('profile.uploadPhoto')}
             </button>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">PNG, JPG, GIF (maks. 2MB)</p>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
@@ -153,12 +155,12 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
         {/* Name */}
         <div>
           <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
-            Ad Soyad
+            {t('profile.fullName')}
           </label>
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Adınız..."
+            placeholder={t('auth.fullNamePlaceholder')}
             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
           />
         </div>
@@ -170,34 +172,34 @@ export function ProfileModal({ onClose, onUpdated }: Props) {
           disabled={saving}
           className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? 'Kaydediliyor...' : 'Kaydet'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
 
         {/* Password change */}
         <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Şifre Değiştir</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('profile.changePassword')}</p>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Yeni şifre"
+            placeholder={t('profile.newPassword')}
             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
           />
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Yeni şifre (tekrar)"
+            placeholder={t('profile.confirmPassword')}
             className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
           />
           {pwError && <p className="text-xs text-red-500">{pwError}</p>}
-          {pwSuccess && <p className="text-xs text-green-600">Şifre başarıyla değiştirildi!</p>}
+          {pwSuccess && <p className="text-xs text-green-600">{t('profile.passwordChanged')}</p>}
           <button
             onClick={handleChangePassword}
             disabled={changingPw}
             className="w-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            {changingPw ? 'Değiştiriliyor...' : 'Şifreyi Değiştir'}
+            {changingPw ? t('auth.updating') : t('profile.updatePassword')}
           </button>
         </div>
       </div>
