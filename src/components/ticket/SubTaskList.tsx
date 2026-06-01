@@ -1,4 +1,5 @@
 import { useState, KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSubTasks, useCreateSubTask, useToggleSubTask, useDeleteSubTask } from '../../hooks/useSubTasks'
 import { SubTaskModal } from './SubTaskModal'
 import { PriorityFlagBadge } from './PriorityPicker'
@@ -10,13 +11,13 @@ interface Props {
 }
 
 export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
+  const { t, i18n } = useTranslation()
   const { data: subtasks = [] } = useSubTasks(ticketId)
   const createSubTask = useCreateSubTask()
   const toggleSubTask = useToggleSubTask()
   const deleteSubTask = useDeleteSubTask()
   const [newTitle, setNewTitle] = useState('')
   const [adding, setAdding] = useState(false)
-  // Store only the ID so the modal always gets fresh data from the query
   const [openSubtaskId, setOpenSubtaskId] = useState<string | null>(null)
   const openSubtask = subtasks.find(s => s.id === openSubtaskId) ?? null
 
@@ -40,12 +41,12 @@ export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-            Alt Görevler
+            {t('subtask.title')}
             {total > 0 && <span className="ml-2 font-normal text-gray-400 normal-case">{done}/{total}</span>}
           </h4>
           {canEdit && !adding && (
             <button onClick={() => setAdding(true)} className="text-xs text-blue-600 hover:underline">
-              + Ekle
+              {t('subtask.add')}
             </button>
           )}
         </div>
@@ -81,7 +82,7 @@ export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
                 )}
                 {sub.due_date && (
                   <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
-                    {new Date(sub.due_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                    {new Date(sub.due_date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
                   </span>
                 )}
               </button>
@@ -89,7 +90,7 @@ export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
                 <button
                   onClick={e => { e.stopPropagation(); deleteSubTask.mutate({ id: sub.id, ticketId }) }}
                   className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 text-xs leading-none transition-opacity flex-shrink-0"
-                  title="Sil"
+                  title={t('common.delete')}
                 >✕</button>
               )}
             </li>
@@ -104,15 +105,15 @@ export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Alt görev başlığı..."
+              placeholder={t('subtask.placeholder')}
               className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
             />
             <button onClick={handleAdd} disabled={!newTitle.trim() || createSubTask.isPending}
               className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              Ekle
+              {t('common.save')}
             </button>
             <button onClick={() => { setAdding(false); setNewTitle('') }} className="text-xs text-gray-400 hover:text-gray-600">
-              İptal
+              {t('common.cancel')}
             </button>
           </div>
         )}
@@ -120,7 +121,7 @@ export function SubTaskList({ ticketId, ticketTitle, canEdit }: Props) {
         {!adding && canEdit && total === 0 && (
           <button onClick={() => setAdding(true)}
             className="w-full text-left text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 py-1.5 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-2 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-            + Alt görev ekle
+            {t('subtask.addNew')}
           </button>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag, useAssignTag, useUnassignTag } from '../../hooks/useTags'
 import type { Tag } from '../../types'
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
+  const { t } = useTranslation()
   const { data: allTags } = useTags(projectId)
   const createTag = useCreateTag()
   const updateTag = useUpdateTag()
@@ -84,7 +86,7 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
       {open && (
         <div className="absolute left-0 top-7 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-72">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Tag Yönetimi</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{t('tag.manage')}</p>
             <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs">✕</button>
           </div>
 
@@ -146,7 +148,7 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => startEdit(tag)}
-                        title="Düzenle"
+                        title={t('common.edit')}
                         className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +157,7 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                       </button>
                       <button
                         onClick={() => handleDelete(tag)}
-                        title="Sil"
+                        title={t('common.delete')}
                         className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +169,7 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                 )}
               </div>
             ))}
-            {!allTags?.length && <p className="text-xs text-gray-400 dark:text-gray-500 px-1.5">Henüz tag yok</p>}
+            {!allTags?.length && <p className="text-xs text-gray-400 dark:text-gray-500 px-1.5">{t('tag.empty')}</p>}
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
@@ -188,16 +190,16 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false) }}
-                  placeholder="Tag adı..."
+                  placeholder={t('tag.namePlaceholder')}
                   className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
                 />
                 <div className="flex gap-2">
-                  <button onClick={handleCreate} disabled={createTag.isPending} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 flex-1">Oluştur</button>
-                  <button onClick={() => setCreating(false)} className="text-xs text-gray-400 px-2 py-1">İptal</button>
+                  <button onClick={handleCreate} disabled={createTag.isPending} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 flex-1">{t('tag.create')}</button>
+                  <button onClick={() => setCreating(false)} className="text-xs text-gray-400 px-2 py-1">{t('common.cancel')}</button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setCreating(true)} className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 w-full text-left">+ Yeni tag oluştur</button>
+              <button onClick={() => setCreating(true)} className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 w-full text-left">{t('tag.addNew')}</button>
             )}
           </div>
         </div>

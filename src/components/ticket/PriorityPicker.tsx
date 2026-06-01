@@ -1,8 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import type { TicketPriority } from '../../types'
 
-const PRIORITIES: {
+const PRIORITY_VALUES: {
   value: TicketPriority
-  label: string
   color: string
   dot: string
   selectedBg: string
@@ -11,7 +11,6 @@ const PRIORITIES: {
 }[] = [
   {
     value: 'low',
-    label: 'Düşük',
     color: '#94a3b8',
     dot: '#94a3b8',
     selectedBg: 'bg-slate-100 dark:bg-slate-800',
@@ -20,7 +19,6 @@ const PRIORITIES: {
   },
   {
     value: 'medium',
-    label: 'Orta',
     color: '#f59e0b',
     dot: '#f59e0b',
     selectedBg: 'bg-amber-50 dark:bg-amber-950/40',
@@ -29,7 +27,6 @@ const PRIORITIES: {
   },
   {
     value: 'high',
-    label: 'Yüksek',
     color: '#f97316',
     dot: '#f97316',
     selectedBg: 'bg-orange-50 dark:bg-orange-950/40',
@@ -38,7 +35,6 @@ const PRIORITIES: {
   },
   {
     value: 'critical',
-    label: 'Kritik',
     color: '#ef4444',
     dot: '#ef4444',
     selectedBg: 'bg-red-50 dark:bg-red-950/40',
@@ -70,17 +66,19 @@ interface PickerProps {
 }
 
 export function PriorityPicker({ value, onChange, disabled }: PickerProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex gap-1.5 flex-wrap">
-      {PRIORITIES.map((p) => {
+      {PRIORITY_VALUES.map((p) => {
         const selected = value === p.value
+        const label = t(`ticket.priority.${p.value}`)
         return (
           <button
             key={p.value}
             type="button"
             disabled={disabled}
             onClick={() => onChange(p.value)}
-            title={p.label}
+            title={label}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border
               ${selected
@@ -91,7 +89,7 @@ export function PriorityPicker({ value, onChange, disabled }: PickerProps) {
             `}
           >
             <FlagIcon color={p.color} filled={selected} />
-            <span className="font-medium">{p.label}</span>
+            <span className="font-medium">{label}</span>
           </button>
         )
       })}
@@ -111,16 +109,10 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
   critical: '#ef4444',
 }
 
-const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  low:      'Düşük',
-  medium:   'Orta',
-  high:     'Yüksek',
-  critical: 'Kritik',
-}
-
 export function PriorityFlagBadge({ priority, size = 'sm' }: BadgeProps) {
+  const { t } = useTranslation()
   const color = PRIORITY_COLORS[priority]
-  const label = PRIORITY_LABELS[priority]
+  const label = t(`ticket.priority.${priority}`)
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'
   return (
     <span className="inline-flex items-center gap-1" title={label}>

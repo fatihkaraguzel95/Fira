@@ -45,7 +45,7 @@ export function LanguageSelector({ variant = 'light' }: Props) {
         title={current.label}
       >
         <span className="text-base leading-none">{current.flag}</span>
-        <span className="text-xs">{current.code.toUpperCase()}</span>
+        <span className="text-xs font-medium">{current.label}</span>
         <svg
           className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''} ${isDark ? 'text-white/60' : 'text-gray-400'}`}
           fill="none"

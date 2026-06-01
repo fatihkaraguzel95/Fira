@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { TicketFilters, TicketPriority, TicketStatus } from '../../types'
 import { useUsers } from '../../hooks/useUsers'
 
@@ -7,11 +8,11 @@ interface Props {
   statuses: TicketStatus[]
 }
 
-const PRIORITIES: { value: TicketPriority; label: string; color: string }[] = [
-  { value: 'low',      label: 'Düşük',   color: '#94a3b8' },
-  { value: 'medium',   label: 'Orta',    color: '#f59e0b' },
-  { value: 'high',     label: 'Yüksek',  color: '#f97316' },
-  { value: 'critical', label: 'Kritik',  color: '#ef4444' },
+const PRIORITY_VALUES: { value: TicketPriority; color: string }[] = [
+  { value: 'low',      color: '#94a3b8' },
+  { value: 'medium',   color: '#f59e0b' },
+  { value: 'high',     color: '#f97316' },
+  { value: 'critical', color: '#ef4444' },
 ]
 
 const Divider = () => (
@@ -19,6 +20,7 @@ const Divider = () => (
 )
 
 export function TicketFilters({ filters, onChange, statuses }: Props) {
+  const { t } = useTranslation()
   const { data: users } = useUsers()
 
   const toggleStatus = (id: string) => {
@@ -48,7 +50,7 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
         </svg>
         <input
           type="text"
-          placeholder="Ara..."
+          placeholder={t('filter.search')}
           value={filters.search ?? ''}
           onChange={(e) => onChange({ ...filters, search: e.target.value || undefined })}
           className="pl-8 pr-3 py-1.5 border border-slate-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 w-36 transition-shadow"
@@ -59,7 +61,7 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
 
       {/* Status */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Durum:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">{t('filter.status')}</span>
         <div className="flex gap-1 flex-wrap">
           {statuses.map((s) => {
             const active = filters.status_id?.includes(s.id)
@@ -85,10 +87,11 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
 
       {/* Priority */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Öncelik:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">{t('filter.priority')}</span>
         <div className="flex gap-1 flex-wrap">
-          {PRIORITIES.map(({ value, label, color }) => {
+          {PRIORITY_VALUES.map(({ value, color }) => {
             const active = filters.priority?.includes(value)
+            const label = t(`ticket.priority.${value}`)
             return (
               <button
                 key={value}
@@ -111,13 +114,13 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
 
       {/* Assignee */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">Kişi:</span>
+        <span className="text-xs text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wide whitespace-nowrap">{t('filter.assignee')}</span>
         <select
           value={filters.assignee_id ?? ''}
           onChange={(e) => onChange({ ...filters, assignee_id: e.target.value || undefined })}
           className="border border-slate-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 dark:text-gray-200 transition-shadow"
         >
-          <option value="">Hepsi</option>
+          <option value="">{t('filter.all')}</option>
           {users?.map((u) => (
             <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
           ))}
@@ -134,7 +137,7 @@ export function TicketFilters({ filters, onChange, statuses }: Props) {
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Temizle
+            {t('filter.clear')}
           </button>
         </>
       )}

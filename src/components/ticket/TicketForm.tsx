@@ -107,7 +107,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
 
               {/* Priority */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.priority')}</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.priorityLabel')}</label>
                 <PriorityPicker value={priority} onChange={(p) => setPriority(p as TicketPriority)} />
               </div>
 

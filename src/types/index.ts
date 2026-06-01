@@ -177,10 +177,3 @@ export interface TicketFilters {
 
 export type ViewMode = 'board' | 'list'
 
-// ─── Labels ───────────────────────────────────────────────────────────────────
-export const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  low: 'Düşük',
-  medium: 'Orta',
-  high: 'Yüksek',
-  critical: 'Kritik',
-}

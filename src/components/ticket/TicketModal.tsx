@@ -14,6 +14,7 @@ import { TagSelector } from './TagSelector'
 import { MultiAssigneeSelector } from './MultiAssigneeSelector'
 import { DescriptionEditor } from './DescriptionEditor'
 import { SubTaskList } from './SubTaskList'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   projectId: string | null
@@ -27,6 +28,7 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 )
 
 export function TicketModal({ projectId }: Props) {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { ticketId } = useParams<{ ticketId: string }>()
   const { user } = useAuth()
@@ -74,7 +76,7 @@ export function TicketModal({ projectId }: Props) {
 
   const handleDelete = async () => {
     if (!ticket) return
-    if (!confirm('Bu ticket silinsin mi?')) return
+    if (!confirm(t('ticket.deleteConfirm'))) return
     await deleteTicket.mutateAsync(ticket.id)
     navigate(-1)
   }
@@ -110,14 +112,14 @@ export function TicketModal({ projectId }: Props) {
     <>
       {/* Status */}
       <div>
-        <SectionLabel>Durum</SectionLabel>
+        <SectionLabel>{t('ticket.status')}</SectionLabel>
         {canEdit && statuses ? (
           <select
             value={ticket?.status_id ?? ''}
             onChange={(e) => handleUpdate({ status_id: e.target.value || null })}
             className="w-full border border-slate-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 dark:text-gray-200 transition-shadow"
           >
-            <option value="">— Seçiniz —</option>
+            <option value="">{t('ticket.selectStatus')}</option>
             {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         ) : (
@@ -136,7 +138,7 @@ export function TicketModal({ projectId }: Props) {
 
       {/* Priority */}
       <div>
-        <SectionLabel>Öncelik</SectionLabel>
+        <SectionLabel>{t('ticket.priorityLabel')}</SectionLabel>
         {canEdit && ticket ? (
           <PriorityPicker value={ticket.priority} onChange={(p) => handleUpdate({ priority: p as TicketPriority })} />
         ) : ticket ? (
@@ -146,7 +148,7 @@ export function TicketModal({ projectId }: Props) {
 
       {/* Assignees */}
       <div>
-        <SectionLabel>Atananlar</SectionLabel>
+        <SectionLabel>{t('ticket.assignees')}</SectionLabel>
         {assignees.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {assignees.map(u => <UserAvatar key={u.id} user={u} size="sm" showName />)}
@@ -156,7 +158,7 @@ export function TicketModal({ projectId }: Props) {
           onClick={() => setShowAssignees(!showAssignees)}
           className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline font-medium"
         >
-          {showAssignees ? 'Kapat' : 'Düzenle'}
+          {showAssignees ? t('ticket.closeAssignees') : t('ticket.editAssignees')}
         </button>
         {showAssignees && ticket && (
           <div className="mt-2">
@@ -167,7 +169,7 @@ export function TicketModal({ projectId }: Props) {
 
       {/* Due Date */}
       <div>
-        <SectionLabel>Bitiş Tarihi</SectionLabel>
+        <SectionLabel>{t('ticket.dueDate')}</SectionLabel>
         {canEdit ? (
           <input
             type="date"
@@ -177,7 +179,7 @@ export function TicketModal({ projectId }: Props) {
           />
         ) : ticket?.due_date ? (
           <span className="text-sm text-slate-700 dark:text-gray-300">
-            {new Date(ticket.due_date).toLocaleDateString('tr-TR')}
+            {new Date(ticket.due_date).toLocaleDateString(i18n.language)}
           </span>
         ) : (
           <span className="text-sm text-slate-400">—</span>
@@ -190,7 +192,7 @@ export function TicketModal({ projectId }: Props) {
               <li key={dl.id} className="group flex items-start gap-1.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-700 dark:text-gray-300">
-                    {new Date(dl.date).toLocaleDateString('tr-TR')}
+                    {new Date(dl.date).toLocaleDateString(i18n.language)}
                   </p>
                   {dl.description && (
                     <p className="text-xs text-slate-400 truncate">{dl.description}</p>
@@ -214,7 +216,7 @@ export function TicketModal({ projectId }: Props) {
             onClick={() => setAddingDeadline(true)}
             className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 hover:underline font-medium"
           >
-            + Ekstra deadline ekle
+            {t('ticket.addDeadline')}
           </button>
         )}
         {canEdit && addingDeadline && (
@@ -229,7 +231,7 @@ export function TicketModal({ projectId }: Props) {
               type="text"
               value={dlDesc}
               onChange={e => setDlDesc(e.target.value)}
-              placeholder="Açıklama (isteğe bağlı)"
+              placeholder={t('ticket.deadlineDescPlaceholder')}
               className="w-full border border-slate-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 dark:text-gray-200"
             />
             <div className="flex gap-1.5">
@@ -238,13 +240,13 @@ export function TicketModal({ projectId }: Props) {
                 disabled={!dlDate || addDeadline.isPending}
                 className="flex-1 text-xs bg-primary-600 text-white px-2 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
               >
-                Ekle
+                {t('common.save')}
               </button>
               <button
                 onClick={() => { setAddingDeadline(false); setDlDate(''); setDlDesc('') }}
                 className="text-xs text-slate-400 hover:text-slate-600 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
               >
-                İptal
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -254,7 +256,7 @@ export function TicketModal({ projectId }: Props) {
       {/* Creator */}
       {ticket?.creator && (
         <div>
-          <SectionLabel>Oluşturan</SectionLabel>
+          <SectionLabel>{t('ticket.creator')}</SectionLabel>
           <div className="flex items-start gap-2">
             <UserAvatar user={ticket.creator} size="sm" />
             <div className="min-w-0">
@@ -262,9 +264,9 @@ export function TicketModal({ projectId }: Props) {
                 {ticket.creator?.full_name || ticket.creator?.email || '—'}
               </p>
               <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">
-                {new Date(ticket.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {new Date(ticket.created_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}
                 {' · '}
-                {new Date(ticket.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                {new Date(ticket.created_at).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>
@@ -274,7 +276,7 @@ export function TicketModal({ projectId }: Props) {
       {/* Last Modified */}
       {ticket?.updater && (
         <div>
-          <SectionLabel>Son Değişiklik</SectionLabel>
+          <SectionLabel>{t('ticket.lastModified')}</SectionLabel>
           <div className="flex items-start gap-2">
             <UserAvatar user={ticket.updater} size="sm" />
             <div className="min-w-0">
@@ -282,9 +284,9 @@ export function TicketModal({ projectId }: Props) {
                 {ticket.updater.full_name || ticket.updater.email}
               </p>
               <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">
-                {new Date(ticket.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {new Date(ticket.updated_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}
                 {' · '}
-                {new Date(ticket.updated_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                {new Date(ticket.updated_at).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>
@@ -342,7 +344,7 @@ export function TicketModal({ projectId }: Props) {
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                {new Date(ticket.due_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                {new Date(ticket.due_date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
               </span>
             )}
             {assignees.length > 0 && (
@@ -394,7 +396,7 @@ export function TicketModal({ projectId }: Props) {
                   onClick={handleDelete}
                   className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors min-h-[32px] font-medium"
                 >
-                  Sil
+                  {t('ticket.delete')}
                 </button>
               )}
               <button
@@ -425,14 +427,14 @@ export function TicketModal({ projectId }: Props) {
               {/* Tags */}
               {projectId && (
                 <div>
-                  <SectionLabel>Taglar</SectionLabel>
+                  <SectionLabel>{t('ticket.tags')}</SectionLabel>
                   <TagSelector ticketId={ticket.id} projectId={projectId} assignedTags={tags} />
                 </div>
               )}
 
               {/* Description */}
               <div>
-                <SectionLabel>Açıklama</SectionLabel>
+                <SectionLabel>{t('ticket.description')}</SectionLabel>
                 {canEdit ? (
                   <DescriptionEditor
                     key={ticket.id}
@@ -441,7 +443,7 @@ export function TicketModal({ projectId }: Props) {
                     onBlur={handleDescBlur}
                     ticketId={ticket.id}
                     minHeight="180px"
-                    placeholder="Açıklama yazın… (Ctrl+B kalın, Ctrl+I italik, Ctrl+V ekran görüntüsü)"
+                    placeholder={t('ticket.descriptionFull')}
                   />
                 ) : (
                   <DescriptionEditor
@@ -451,7 +453,7 @@ export function TicketModal({ projectId }: Props) {
                     ticketId={ticket.id}
                     readOnly
                     minHeight="120px"
-                    placeholder="Açıklama yok"
+                    placeholder={t('ticket.noDescription')}
                   />
                 )}
               </div>
@@ -475,7 +477,7 @@ export function TicketModal({ projectId }: Props) {
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-gray-500">
-            Ticket bulunamadı
+            {t('ticket.noTicket')}
           </div>
         )}
       </div>

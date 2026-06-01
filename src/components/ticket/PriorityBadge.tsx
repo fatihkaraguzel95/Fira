@@ -1,5 +1,5 @@
+import { useTranslation } from 'react-i18next'
 import type { TicketPriority } from '../../types'
-import { PRIORITY_LABELS } from '../../types'
 
 const dotColor: Record<TicketPriority, string> = {
   low:      '#94a3b8',
@@ -21,6 +21,7 @@ interface Props {
 }
 
 export function PriorityBadge({ priority, size = 'sm' }: Props) {
+  const { t } = useTranslation()
   const sizeClass = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-2.5 py-1'
   return (
     <span
@@ -30,7 +31,7 @@ export function PriorityBadge({ priority, size = 'sm' }: Props) {
         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: dotColor[priority] }}
       />
-      {PRIORITY_LABELS[priority]}
+      {t(`ticket.priority.${priority}`)}
     </span>
   )
 }

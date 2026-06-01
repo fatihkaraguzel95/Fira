@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useUsers } from '../../hooks/useUsers'
 import { useAddAssignee, useRemoveAssignee } from '../../hooks/useTicketAssignees'
 import type { Profile } from '../../types'
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function MultiAssigneeSelector({ ticketId, assignees, teamMembers }: Props) {
+  const { t } = useTranslation()
   const { data: allUsers } = useUsers()
   const addAssignee = useAddAssignee()
   const removeAssignee = useRemoveAssignee()
@@ -46,7 +48,7 @@ export function MultiAssigneeSelector({ ticketId, assignees, teamMembers }: Prop
         </label>
       ))}
       {users.length === 0 && (
-        <p className="text-xs text-gray-400">Kullanıcı bulunamadı</p>
+        <p className="text-xs text-gray-400">{t('ticket.noUserFound')}</p>
       )}
     </div>
   )
