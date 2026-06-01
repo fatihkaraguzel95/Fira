@@ -17,6 +17,7 @@ i18n
     },
     fallbackLng: 'tr',
     supportedLngs: ['tr', 'en', 'de'],
+    nonExplicitSupportedLngs: true,
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],

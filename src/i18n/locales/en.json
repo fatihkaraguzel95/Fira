@@ -166,6 +166,31 @@
       "critical": "Critical"
     }
   },
+  "kanban": {
+    "addStatus": "Add Status",
+    "newStatus": "New Status",
+    "statusNamePlaceholder": "Status name...",
+    "add": "Add",
+    "addStatusShort": "+ Add status",
+    "dropHere": "Drop here",
+    "archived": "archived",
+    "unarchive": "Unarchive",
+    "selectColor": "Select Color",
+    "sort": "Sort",
+    "deleteStatusConfirm": "status will be deleted?",
+    "colors": {
+      "gray": "Gray",
+      "blue": "Blue",
+      "green": "Green",
+      "yellow": "Yellow",
+      "red": "Red",
+      "purple": "Purple",
+      "pink": "Pink",
+      "orange": "Orange",
+      "teal": "Teal",
+      "lightBlue": "Light Blue"
+    }
+  },
   "profile": {
     "title": "Profile",
     "uploadPhoto": "Upload Photo",

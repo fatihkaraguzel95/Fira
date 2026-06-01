@@ -166,6 +166,31 @@
       "critical": "Kritisch"
     }
   },
+  "kanban": {
+    "addStatus": "Status hinzufügen",
+    "newStatus": "Neuer Status",
+    "statusNamePlaceholder": "Statusname...",
+    "add": "Hinzufügen",
+    "addStatusShort": "+ Status hinzufügen",
+    "dropHere": "Hier ablegen",
+    "archived": "archiviert",
+    "unarchive": "Archiv aufheben",
+    "selectColor": "Farbe auswählen",
+    "sort": "Sortieren",
+    "deleteStatusConfirm": "Status wird gelöscht?",
+    "colors": {
+      "gray": "Grau",
+      "blue": "Blau",
+      "green": "Grün",
+      "yellow": "Gelb",
+      "red": "Rot",
+      "purple": "Lila",
+      "pink": "Rosa",
+      "orange": "Orange",
+      "teal": "Türkis",
+      "lightBlue": "Hellblau"
+    }
+  },
   "profile": {
     "title": "Profil",
     "uploadPhoto": "Foto hochladen",

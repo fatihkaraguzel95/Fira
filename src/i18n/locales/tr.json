@@ -166,6 +166,31 @@
       "critical": "Kritik"
     }
   },
+  "kanban": {
+    "addStatus": "Durum Ekle",
+    "newStatus": "Yeni Durum",
+    "statusNamePlaceholder": "Durum adı...",
+    "add": "Ekle",
+    "addStatusShort": "+ Durum ekle",
+    "dropHere": "Buraya bırak",
+    "archived": "arşivlenmiş",
+    "unarchive": "Arşivden Çıkar",
+    "selectColor": "Renk Seç",
+    "sort": "Sırala",
+    "deleteStatusConfirm": "durumu silinsin mi?",
+    "colors": {
+      "gray": "Gri",
+      "blue": "Mavi",
+      "green": "Yeşil",
+      "yellow": "Sarı",
+      "red": "Kırmızı",
+      "purple": "Mor",
+      "pink": "Pembe",
+      "orange": "Turuncu",
+      "teal": "Turkuaz",
+      "lightBlue": "Açık Mavi"
+    }
+  },
   "profile": {
     "title": "Profil",
     "uploadPhoto": "Fotoğraf Yükle",

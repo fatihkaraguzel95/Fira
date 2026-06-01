@@ -20,16 +20,17 @@ import { KanbanColumn } from './KanbanColumn'
 import { TicketCard } from './TicketCard'
 import { useReorderTickets, useArchiveTicket, getLocalArchivedIds } from '../../hooks/useTickets'
 import { useCreateStatus } from '../../hooks/useStatuses'
+import { useTranslation } from 'react-i18next'
 
 const COLORS = [
-  { hex: '#6b7280', label: 'Gri' },
-  { hex: '#3b82f6', label: 'Mavi' },
-  { hex: '#10b981', label: 'Yeşil' },
-  { hex: '#f59e0b', label: 'Sarı' },
-  { hex: '#ef4444', label: 'Kırmızı' },
-  { hex: '#8b5cf6', label: 'Mor' },
-  { hex: '#ec4899', label: 'Pembe' },
-  { hex: '#f97316', label: 'Turuncu' },
+  { hex: '#6b7280', labelKey: 'kanban.colors.gray' },
+  { hex: '#3b82f6', labelKey: 'kanban.colors.blue' },
+  { hex: '#10b981', labelKey: 'kanban.colors.green' },
+  { hex: '#f59e0b', labelKey: 'kanban.colors.yellow' },
+  { hex: '#ef4444', labelKey: 'kanban.colors.red' },
+  { hex: '#8b5cf6', labelKey: 'kanban.colors.purple' },
+  { hex: '#ec4899', labelKey: 'kanban.colors.pink' },
+  { hex: '#f97316', labelKey: 'kanban.colors.orange' },
 ]
 
 interface Props {
@@ -39,6 +40,7 @@ interface Props {
 }
 
 function AddStatusColumn({ projectId }: { projectId: string }) {
+  const { t } = useTranslation()
   const createStatus = useCreateStatus()
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
@@ -62,7 +64,7 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Durum Ekle
+          {t('kanban.addStatus')}
         </button>
       </div>
     )
@@ -70,13 +72,13 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
 
   return (
     <div className="flex-shrink-0 w-[300px] bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-700 shadow-card p-4 space-y-3">
-      <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">Yeni Durum</p>
+      <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">{t('kanban.newStatus')}</p>
 
       <div className="flex flex-wrap gap-1.5">
         {COLORS.map((c) => (
           <button
             key={c.hex}
-            title={c.label}
+            title={t(c.labelKey)}
             onClick={() => setColor(c.hex)}
             className="w-6 h-6 rounded-full transition-transform hover:scale-110 flex-shrink-0"
             style={{
@@ -99,7 +101,7 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
             if (e.key === 'Enter') handleAdd()
             if (e.key === 'Escape') setAdding(false)
           }}
-          placeholder="Durum adı..."
+          placeholder={t('kanban.statusNamePlaceholder')}
           className="flex-1 border border-slate-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-transparent dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500"
         />
       </div>
@@ -110,13 +112,13 @@ function AddStatusColumn({ projectId }: { projectId: string }) {
           disabled={!name.trim() || createStatus.isPending}
           className="flex-1 text-xs bg-primary-600 text-white px-3 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors font-medium"
         >
-          Ekle
+          {t('kanban.add')}
         </button>
         <button
           onClick={() => setAdding(false)}
           className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
         >
-          İptal
+          {t('common.cancel')}
         </button>
       </div>
     </div>

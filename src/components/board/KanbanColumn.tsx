@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom'
 import type { Ticket, TicketStatus } from '../../types'
 import { TicketCard } from './TicketCard'
 import { PriorityFlagBadge } from '../ticket/PriorityPicker'
+import { useTranslation } from 'react-i18next'
 
 // ─── Compact archived card ────────────────────────────────────────────────────
 function ArchivedCard({ ticket, onUnarchive }: { ticket: Ticket; onUnarchive: () => void }) {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const dueDate = ticket.due_date ? new Date(ticket.due_date) : null
 
@@ -26,12 +28,12 @@ function ArchivedCard({ ticket, onUnarchive }: { ticket: Ticket; onUnarchive: ()
         <PriorityFlagBadge priority={ticket.priority} size="sm" />
         {dueDate && (
           <span className="text-[10px] text-slate-300 dark:text-gray-600 tabular-nums">
-            {dueDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+            {dueDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
           </span>
         )}
         <button
           onClick={onUnarchive}
-          title="Arşivden Çıkar"
+          title={t('kanban.unarchive')}
           className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,6 +54,7 @@ interface Props {
 }
 
 export function KanbanColumn({ status, tickets, archivedTickets, onArchive }: Props) {
+  const { t } = useTranslation()
   const { setNodeRef, isOver } = useDroppable({ id: status.id })
   const [showArchived, setShowArchived] = useState(false)
 
@@ -108,7 +111,7 @@ export function KanbanColumn({ status, tickets, archivedTickets, onArchive }: Pr
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
               </svg>
-              <span className="text-[11px] font-medium">Buraya bırak</span>
+              <span className="text-[11px] font-medium">{t('kanban.dropHere')}</span>
             </div>
           )}
         </div>
@@ -129,7 +132,7 @@ export function KanbanColumn({ status, tickets, archivedTickets, onArchive }: Pr
               <svg className="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
-              <span className="font-medium">{archivedTickets.length} arşivlenmiş</span>
+              <span className="font-medium">{archivedTickets.length} {t('kanban.archived')}</span>
             </button>
 
             {showArchived && (
