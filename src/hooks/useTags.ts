@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { invalidateTicketViews } from '../lib/invalidate'
 import type { Tag } from '../types'
 
 export function useTags(projectId: string | null) {
@@ -75,10 +76,7 @@ export function useAssignTag() {
         .insert({ ticket_id: ticketId, tag_id: tagId })
       if (error && !error.message.includes('duplicate')) throw error
     },
-    onSuccess: (_d, { ticketId }) => {
-      qc.invalidateQueries({ queryKey: ['ticket', ticketId] })
-      qc.invalidateQueries({ queryKey: ['tickets'] })
-    },
+    onSuccess: (_d, { ticketId }) => invalidateTicketViews(qc, ticketId),
   })
 }
 
@@ -93,9 +91,6 @@ export function useUnassignTag() {
         .eq('tag_id', tagId)
       if (error) throw error
     },
-    onSuccess: (_d, { ticketId }) => {
-      qc.invalidateQueries({ queryKey: ['ticket', ticketId] })
-      qc.invalidateQueries({ queryKey: ['tickets'] })
-    },
+    onSuccess: (_d, { ticketId }) => invalidateTicketViews(qc, ticketId),
   })
 }

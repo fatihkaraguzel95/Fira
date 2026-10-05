@@ -1,135 +1,113 @@
 import { useState } from 'react'
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable'
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useStatuses, useCreateStatus, useUpdateStatus, useDeleteStatus, useReorderStatuses } from '../../hooks/useStatuses'
-import type { TicketStatus } from '../../types'
-import { useTranslation } from 'react-i18next'
+import { useStatuses, useCreateStatus, useUpdateStatus, useDeleteStatus, useReorderStatuses, useStatusTicketCounts } from '../../hooks/useStatuses'
+import type { TicketStatus, StatusCategory } from '../../types'
+import { STATUS_CATEGORY_LABELS, STATUS_CATEGORY_HINTS, STATUS_CATEGORY_ORDER } from '../../types'
+import { isCategorySorted, sortByCategory } from '../../lib/statusOrder'
+import { StatusIndicator } from '../ticket/StatusIndicator'
+import { TeamHexPicker } from '../ui/ColorPalettePicker'
+import { useProjectRole } from '../../hooks/useTeams'
+import { useT } from '../../i18n'
 
-const COLORS = [
-  { hex: '#6b7280', labelKey: 'kanban.colors.gray' },
-  { hex: '#3b82f6', labelKey: 'kanban.colors.blue' },
-  { hex: '#10b981', labelKey: 'kanban.colors.green' },
-  { hex: '#f59e0b', labelKey: 'kanban.colors.yellow' },
-  { hex: '#ef4444', labelKey: 'kanban.colors.red' },
-  { hex: '#8b5cf6', labelKey: 'kanban.colors.purple' },
-  { hex: '#ec4899', labelKey: 'kanban.colors.pink' },
-  { hex: '#f97316', labelKey: 'kanban.colors.orange' },
-  { hex: '#14b8a6', labelKey: 'kanban.colors.teal' },
-  { hex: '#0ea5e9', labelKey: 'kanban.colors.lightBlue' },
-]
+// Status colours come from the team palette (see TeamHexPicker) — the same
+// named colours lists, folders and tags use, instead of a private preset list.
+const DEFAULT_STATUS_HEX = '#6b7280'
 
-function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
-  const { t } = useTranslation()
+export function CategorySelect({ value, cancelled, onChange }: { value: StatusCategory; cancelled: boolean; onChange: (c: StatusCategory, cancelled: boolean) => void }) {
+  const t = useT()
+  const v = value === 'closed' && cancelled ? 'cancelled' : value
   return (
-    <div className="flex gap-1 flex-wrap">
-      {COLORS.map((c) => (
-        <button
-          key={c.hex}
-          title={t(c.labelKey)}
-          onClick={() => onChange(c.hex)}
-          className="w-5 h-5 rounded-full transition-transform hover:scale-110 flex-shrink-0"
-          style={{
-            backgroundColor: c.hex,
-            outline: value === c.hex ? `2px solid ${c.hex}` : undefined,
-            outlineOffset: 2,
-            boxShadow: value === c.hex ? '0 0 0 1px white inset' : undefined,
-          }}
-        />
-      ))}
-    </div>
+    <select
+      value={v}
+      onChange={(e) => { const x = e.target.value; x === 'cancelled' ? onChange('closed', true) : onChange(x as StatusCategory, false) }}
+      title={t(STATUS_CATEGORY_HINTS[value])}
+      className="text-2xs bg-field border border-line rounded-md px-1.5 py-0.5 text-fg-2 outline-none focus:ring-1 focus:ring-primary-500"
+    >
+      {STATUS_CATEGORY_ORDER.map((c) => <option key={c} value={c}>{t(STATUS_CATEGORY_LABELS[c])}</option>)}
+      <option value="cancelled">{t('board.status.cancelledOption')}</option>
+    </select>
   )
 }
 
-function SortableStatusRow({
-  status,
-  onUpdate,
-  onDelete,
-}: {
+function SortableStatusRow({ status, statuses, ticketCount, onUpdate, onDelete, teamId, canCreateColor }: {
   status: TicketStatus
-  onUpdate: (id: string, name?: string, color?: string) => void
-  onDelete: (id: string) => void
+  statuses: TicketStatus[]
+  teamId: string | null
+  canCreateColor: boolean
+  /** Tickets currently in this status — 0 means nothing has to be moved anywhere. */
+  ticketCount: number
+  onUpdate: (patch: { name?: string; color?: string; category?: StatusCategory; isCancelled?: boolean }) => void
+  onDelete: (moveTo: string | null) => void
 }) {
-  const { t } = useTranslation()
+  const t = useT()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: status.id })
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(status.name)
   const [showColors, setShowColors] = useState(false)
-
+  const [confirming, setConfirming] = useState(false)
+  const [moveTo, setMoveTo] = useState<string>('')
+  const others = statuses.filter((s) => s.id !== status.id)
+  const lastClosed = status.category === 'closed' && statuses.filter((s) => s.category === 'closed').length === 1
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
 
   return (
     <div ref={setNodeRef} style={style} className="group">
-      <div className="flex items-center gap-2 py-1.5 px-1 rounded-lg hover:bg-gray-50">
-        {/* Drag handle */}
-        <span
-          {...attributes}
-          {...listeners}
-          className="cursor-grab text-gray-300 hover:text-gray-500 text-sm select-none"
-          title={t('kanban.sort')}
-        >
-          ⠿
-        </span>
-
-        {/* Color dot */}
+      <div className="flex items-center gap-2 py-1.5 px-1 rounded-lg hover:bg-raised">
+        <span {...attributes} {...listeners} className="cursor-move text-fg-faint text-sm select-none" title={t('board.status.reorder')}>⠿</span>
         <div className="relative">
-          <button
-            onClick={() => setShowColors(!showColors)}
-            className="w-4 h-4 rounded-full flex-shrink-0 hover:ring-2 hover:ring-offset-1 transition-all"
-            style={{ backgroundColor: status.color, outlineColor: status.color }}
-          />
+          <button onClick={() => setShowColors(!showColors)} className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-line/60" title={t('board.status.color')}>
+            <StatusIndicator status={status} size={16} />
+          </button>
           {showColors && (
-            <div className="absolute left-0 top-6 z-30 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-44">
-              <p className="text-xs text-gray-500 mb-2 font-medium">{t('kanban.selectColor')}</p>
-              <ColorPicker
-                value={status.color}
-                onChange={(c) => { onUpdate(status.id, undefined, c); setShowColors(false) }}
-              />
+            <div className="absolute left-0 top-7 z-30 bg-surface border border-line rounded-xl shadow-lg p-3 w-64">
+              <p className="text-xs text-fg-muted mb-2 font-medium">{t('board.status.palette')}</p>
+              <TeamHexPicker teamId={teamId} canCreate={canCreateColor} value={status.color} onChange={(c) => { onUpdate({ color: c }); setShowColors(false) }} />
             </div>
           )}
         </div>
-
-        {/* Name */}
         {editing ? (
-          <input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => { setEditing(false); if (name.trim() && name !== status.name) onUpdate(status.id, name.trim()) }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { setEditing(false); if (name.trim() && name !== status.name) onUpdate(status.id, name.trim()) }
-              if (e.key === 'Escape') { setEditing(false); setName(status.name) }
-            }}
-            className="flex-1 text-sm border border-blue-400 rounded px-2 py-0.5 outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
+            onBlur={() => { setEditing(false); if (name.trim() && name !== status.name) onUpdate({ name: name.trim() }) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { setEditing(false); if (name.trim() && name !== status.name) onUpdate({ name: name.trim() }) } if (e.key === 'Escape') { setEditing(false); setName(status.name) } }}
+            className="flex-1 text-sm border border-primary-400 bg-field text-fg rounded-md px-2 py-0.5 outline-none focus:ring-1 focus:ring-primary-500" />
         ) : (
-          <span
-            className="flex-1 text-sm text-gray-700 cursor-pointer hover:text-blue-600 truncate"
-            onClick={() => setEditing(true)}
-          >
-            {status.name}
-          </span>
+          <span className="flex-1 text-sm text-fg-2 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 truncate" onClick={() => setEditing(true)}>{status.name}</span>
         )}
-
-        <button
-          onClick={() => { if (confirm(`"${status.name}" ${t('kanban.deleteStatusConfirm')}`)) onDelete(status.id) }}
-          className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 text-xs transition-all"
-        >
-          ✕
-        </button>
+        <CategorySelect value={status.category} cancelled={status.is_cancelled} onChange={(category, isCancelled) => onUpdate({ category, isCancelled })} />
+        {lastClosed ? (
+          <span className="text-2xs text-fg-faint w-4 text-center" title={t('board.status.locked')}>🔒</span>
+        ) : confirming ? null : (
+          <button onClick={() => setConfirming(true)} title={t('board.status.delete')} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-fg-faint hover:text-red-500 text-xs">✕</button>
+        )}
       </div>
+      {confirming && (
+        <div className="ml-8 mb-2 p-2 rounded-lg bg-raised text-xs space-y-1.5">
+          {ticketCount === 0 ? (
+            /* Nothing to move: asking where to put zero tickets is just a hurdle. */
+            <>
+              <p className="text-fg-2">{t('board.status.confirmEmpty', { name: status.name })}</p>
+              <div className="flex gap-1.5">
+                <button onClick={() => { onDelete(null); setConfirming(false) }} className="px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold">{t('common.delete')}</button>
+                <button onClick={() => setConfirming(false)} className="px-2 py-1 rounded-md text-fg-2 hover:bg-line/60">{t('common.giveUp')}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-fg-2">{t('board.status.moveWhere', { n: ticketCount })}</p>
+              <select value={moveTo} onChange={(e) => setMoveTo(e.target.value)} className="w-full text-xs bg-field border border-line rounded-md px-1.5 py-1 text-fg">
+                <option value="">{t('board.status.choose')}</option>
+                {others.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <div className="flex gap-1.5">
+                <button disabled={!moveTo} onClick={() => { onDelete(moveTo); setConfirming(false) }} className="px-2 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white font-semibold disabled:opacity-50">{t('board.status.moveAndDelete')}</button>
+                <button onClick={() => setConfirming(false)} className="px-2 py-1 rounded-md text-fg-2 hover:bg-line/60">{t('common.giveUp')}</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -137,8 +115,9 @@ function SortableStatusRow({
 interface Props { projectId: string }
 
 export function StatusManager({ projectId }: Props) {
-  const { t } = useTranslation()
+  const t = useT()
   const { data: statuses = [] } = useStatuses(projectId)
+  const { data: counts = {} } = useStatusTicketCounts(projectId)
   const createStatus = useCreateStatus()
   const updateStatus = useUpdateStatus()
   const deleteStatus = useDeleteStatus()
@@ -146,70 +125,68 @@ export function StatusManager({ projectId }: Props) {
 
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newColor, setNewColor] = useState('#6b7280')
+  const [newColor, setNewColor] = useState(DEFAULT_STATUS_HEX)
+  const { teamId, perms } = useProjectRole(projectId)
+  const [newCat, setNewCat] = useState<StatusCategory>('active')
+  const [newCancelled, setNewCancelled] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
     const oldIdx = statuses.findIndex((s) => s.id === active.id)
     const newIdx = statuses.findIndex((s) => s.id === over.id)
     if (oldIdx === -1 || newIdx === -1) return
-    const reordered = arrayMove(statuses, oldIdx, newIdx)
-    reorderStatuses.mutate(reordered.map((s, i) => ({ id: s.id, order_index: i, projectId })))
+    reorderStatuses.mutate(arrayMove(statuses, oldIdx, newIdx).map((s, i) => ({ id: s.id, order_index: i, projectId })))
   }
-
   const handleAdd = async () => {
     if (!newName.trim()) return
-    await createStatus.mutateAsync({ projectId, name: newName.trim(), color: newColor })
-    setNewName('')
-    setNewColor('#6b7280')
-    setAdding(false)
+    await createStatus.mutateAsync({ projectId, name: newName.trim(), color: newColor, category: newCat, isCancelled: newCancelled })
+    setNewName(''); setNewColor(DEFAULT_STATUS_HEX); setNewCat('active'); setNewCancelled(false); setAdding(false)
   }
+  const hasClosed = statuses.some((s) => s.category === 'closed')
 
   return (
     <div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={statuses.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           {statuses.map((s) => (
-            <SortableStatusRow
-              key={s.id}
-              status={s}
-              onUpdate={(id, name, color) => updateStatus.mutate({ id, projectId, name, color })}
-              onDelete={(id) => deleteStatus.mutate({ id, projectId })}
-            />
+            <SortableStatusRow key={s.id} status={s} statuses={statuses} ticketCount={counts[s.id] ?? 0} teamId={teamId} canCreateColor={perms.canManage}
+              onUpdate={(patch) => updateStatus.mutate({ id: s.id, projectId, ...patch })}
+              onDelete={(moveTo) => deleteStatus.mutate({ id: s.id, projectId, moveTo })} />
           ))}
         </SortableContext>
       </DndContext>
+      {!hasClosed && <p className="text-xs text-warning mt-1 px-1">{t('board.status.noClosed')}</p>}
+      {/* Sıra kategorilere uymuyorsa (#bc239e3c) tek tıkla düzeltilir; kendiliğinden değişmez. */}
+      {!isCategorySorted(statuses) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-muted" data-testid="status-unsorted">
+          <span>{t('board.status.unsorted')}</span>
+          <button type="button" disabled={reorderStatuses.isPending}
+            onClick={() => reorderStatuses.mutate(sortByCategory(statuses).map((s, i) => ({ id: s.id, order_index: i, projectId })))}
+            className="font-medium text-primary-600 dark:text-primary-300 hover:underline disabled:opacity-50">
+            {t('board.status.sortByCategory')}
+          </button>
+        </div>
+      )}
 
       {adding ? (
-        <div className="mt-2 space-y-2 border-t border-gray-100 pt-2">
-          <ColorPicker value={newColor} onChange={setNewColor} />
+        <div className="mt-2 space-y-2 border-t border-line-soft pt-2">
+          <TeamHexPicker teamId={teamId} canCreate={perms.canManage} value={newColor} onChange={setNewColor} />
           <div className="flex items-center gap-1.5">
-            <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: newColor }} />
-            <input
-              autoFocus
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+            <StatusIndicator status={{ name: newName, color: newColor, category: newCat, is_cancelled: newCancelled }} size={16} />
+            <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAdding(false) }}
-              placeholder={t('kanban.statusNamePlaceholder')}
-              className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+              placeholder={t('board.status.namePlaceholder')} className="flex-1 text-sm border border-line bg-field text-fg rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            <CategorySelect value={newCat} cancelled={newCancelled} onChange={(c, x) => { setNewCat(c); setNewCancelled(x) }} />
           </div>
+          <p className="text-xs text-fg-faint">{t(STATUS_CATEGORY_HINTS[newCat])}</p>
           <div className="flex gap-2">
-            <button onClick={handleAdd} disabled={createStatus.isPending} className="flex-1 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {t('kanban.add')}
-            </button>
-            <button onClick={() => setAdding(false)} className="text-xs text-gray-400 px-2 py-1.5">{t('common.cancel')}</button>
+            <button onClick={handleAdd} disabled={createStatus.isPending} className="flex-1 text-xs bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 disabled:opacity-50">{t('common.add')}</button>
+            <button onClick={() => setAdding(false)} className="text-xs text-fg-faint px-2 py-1.5">{t('common.cancel')}</button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1 mt-2 px-1"
-        >
-          {t('kanban.addStatusShort')}
-        </button>
+        <button onClick={() => setAdding(true)} className="text-xs text-fg-faint hover:text-fg-2 flex items-center gap-1 mt-2 px-1"><span>+</span> {t('board.status.add')}</button>
       )}
     </div>
   )

@@ -18,7 +18,8 @@
       "Bash(wc -l \"F:\\\\Masaüstü\\\\Workspace\\\\Fira/src/components\"/**/*.tsx)",
       "Bash(xargs wc:*)",
       "Bash(npm install:*)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

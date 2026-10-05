@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "fira": { "command": "node", "args": ["tools/agent/fira-mcp.mjs"] }
+  }
+}

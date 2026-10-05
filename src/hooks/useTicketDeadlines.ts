@@ -37,7 +37,7 @@ export function useAddDeadline() {
 export function useDeleteDeadline() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ticketId }: { id: string; ticketId: string }) => {
+    mutationFn: async ({ id }: { id: string; ticketId: string }) => {
       const { error } = await supabase.from('ticket_deadlines').delete().eq('id', id)
       if (error) throw error
     },

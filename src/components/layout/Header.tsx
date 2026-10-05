@@ -1,171 +1,74 @@
-import { useAuth } from "../../hooks/useAuth";
-import { useTheme } from "../../hooks/useTheme";
-import type { ViewMode, Project, Team } from "../../types";
-import { UserAvatar } from "../ticket/UserAvatar";
-import { StatusManager } from "../board/StatusManager";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "../LanguageSelector";
+import type { ReactNode } from 'react'
+import { Icon } from '../ui/Icon'
+import type { Project, Team, TicketFilters, TicketStatus } from '../../types'
+import { FilterMenu } from './FilterMenu'
+import { ListCrumb } from './ListCrumb'
+import { useT } from '../../i18n'
 
+/**
+ * The open list's own row (#43a865fb → #9ab8db99), one line:
+ *   TEAM / List   ·   Pano · Liste · saved views · +   ·············   Filtre
+ * Everything here acts on this list. App-wide controls (palette, profile) are
+ * in the TopBar; searching moved to the palette ("/" opens it narrowed to this
+ * list); a new task comes from the palette ("n", "Yeni görev") or a column's /
+ * group's "Görev ekle"; statuses live in the list's settings (the list name).
+ */
 interface Props {
-  view: ViewMode;
-  onViewChange: (v: ViewMode) => void;
-  onNewTicket: () => void;
-  onShowWhatsNew: () => void;
-  onOpenProfile: () => void;
-  currentUserProfile: {
-    id: string;
-    email: string;
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-  project: Project | null;
-  team: Team | null;
+  onMenuToggle: () => void
+  project: Project | null
+  team: Team | null
+  /** Shown in place of the list name when the main area is not a list ("Görevlerim" gibi). */
+  contextLabel?: string
+  /** Sayfa açıkken (#c64e74fa): satırın söyleyeceği bir şey yok — sayfanın kendi
+   *  başlığı ve konumu zaten üstünde. Masaüstünde satır tamamen gizlenir,
+   *  telefonda yalnız menü düğmesi kalır. */
+  bare?: boolean
+  filters: TicketFilters
+  onFiltersChange: (f: TicketFilters) => void
+  statuses: TicketStatus[]
+  /** The view tabs (Pano · Liste · saved views), between the crumb and the filter. */
+  views?: ReactNode
+  onTeam?: () => void
+  /** Opens the list's settings (name, folder, icon, colour, statuses); absent for read-only viewers. */
+  onEditList?: () => void
+  /** What the list name does when clicked ("list settings and statuses", or just "statuses" for members). */
+  editListLabel?: string
 }
 
-export function Header({
-  view,
-  onViewChange,
-  onNewTicket,
-  onShowWhatsNew,
-  onOpenProfile,
-  currentUserProfile,
-  project,
-  team,
-}: Props) {
-  const { t } = useTranslation();
-  const { signOut } = useAuth();
-  const { isDark, toggle } = useTheme();
-  const [showStatuses, setShowStatuses] = useState(false);
-
+export function Header({ onMenuToggle, project, team, contextLabel, bare = false, filters, onFiltersChange, statuses, views, onTeam, onEditList, editListLabel }: Props) {
+  const t = useT()
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-3 flex items-center justify-between flex-shrink-0">
-      {/* Left */}
-      <div className="flex items-center gap-4">
-        {project ? (
-          <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">{team?.name}</p>
-            <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">
-              {project.name}
-            </h1>
-          </div>
-        ) : (
-          <span className="text-sm text-gray-400 dark:text-gray-500">{t('header.selectProject')}</span>
-        )}
+    <div data-context-bar className={`bg-surface border-b border-line-soft px-3 md:px-5 py-2 flex flex-wrap md:flex-nowrap items-center flex-shrink-0 gap-2 md:gap-3 ${bare ? 'md:hidden min-h-0' : 'min-h-[57px]'}`}>
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuToggle}
+        className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl text-fg-muted hover:bg-raised active:bg-raised transition-colors flex-shrink-0"
+        aria-label={t('board.header.openMenu')}
+      >
+        <Icon name="menu" size={20} />
+      </button>
 
-        {project && (
-          <>
-            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <button
-                onClick={() => onViewChange("board")}
-                className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                  view === "board"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                {t('header.kanban')}
-              </button>
-              <button
-                onClick={() => onViewChange("list")}
-                className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-                  view === "list"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                {t('header.list')}
-              </button>
-            </div>
+      {bare ? null : project ? (
+        <ListCrumb teamName={team?.name ?? null} list={project} onTeam={onTeam} onEditList={onEditList} editLabel={editListLabel} />
+      ) : contextLabel ? (
+        <span className="text-sm font-semibold text-fg-2 truncate">{contextLabel}</span>
+      ) : (
+        <span className="text-sm text-fg-faint hidden md:block">{t('board.header.pickList')}</span>
+      )}
 
-            <div className="relative">
-              <button
-                onClick={() => setShowStatuses(!showStatuses)}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-                </svg>
-                {t('header.statuses')}
-              </button>
-              {showStatuses && (
-                <div className="absolute left-0 top-10 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 w-64">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      {t('header.statusManagement')}
-                    </p>
-                    <button
-                      onClick={() => setShowStatuses(false)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <StatusManager projectId={project.id} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      {/* Not a scroll box: the tabs' menus and the save-as popover open below them and would be clipped.
+          On a phone the tabs take their own line under the crumb instead. */}
+      {project && views && (
+        <div className="order-last md:order-none basis-full md:basis-auto md:flex-1 min-w-0" data-tour="view">{views}</div>
+      )}
+      <span className="flex-1 md:hidden" />
+      {!(project && views) && <span className="hidden md:block flex-1" />}
 
-      {/* Right */}
-      <div className="flex items-center gap-2">
-        {project && (
-          <button
-            onClick={onNewTicket}
-            className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            <span className="text-base leading-none">+</span> {t('header.newTicket')}
-          </button>
-        )}
-
-        {/* Whats New button */}
-        <button
-          onClick={onShowWhatsNew}
-          title={t('header.whatsNew')}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-          </svg>
-        </button>
-
-        {/* Language selector */}
-        <LanguageSelector />
-
-        {/* Dark mode toggle */}
-        <button
-          onClick={toggle}
-          title={isDark ? t('header.lightMode') : t('header.darkMode')}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-base"
-        >
-          {isDark ? "☀️" : "🌙"}
-        </button>
-
-        {currentUserProfile && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenProfile}
-              className="flex items-center gap-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-1.5 py-1 transition-colors"
-            >
-              <UserAvatar
-                user={currentUserProfile as Parameters<typeof UserAvatar>[0]["user"]}
-                size="sm"
-                showName
-              />
-            </button>
-            <button
-              onClick={signOut}
-              className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              {t('header.logout')}
-            </button>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+      {project && (
+        <div className="flex-shrink-0">
+          <FilterMenu filters={filters} onChange={onFiltersChange} statuses={statuses} teamId={team?.id ?? null} projectId={project.id} align="right" />
+        </div>
+      )}
+    </div>
+  )
 }

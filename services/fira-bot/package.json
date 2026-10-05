@@ -1,0 +1,17 @@
+{
+  "name": "fira-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Telefondan konusarak Fira gorevi acan Telegram botu (Node 20+)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "openai": "^6.49.0"
+  }
+}

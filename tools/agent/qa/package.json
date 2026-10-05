@@ -1,0 +1,9 @@
+{
+  "name": "fira-agent-qa",
+  "private": true,
+  "type": "module",
+  "description": "Browser helpers for checking a deployed Fira build in the separate QA window (see ../README.md).",
+  "dependencies": {
+    "playwright-core": "^1.47.2"
+  }
+}

@@ -1,0 +1,2 @@
+# Shell scripts run on the Linux server and in Git Bash; a CR breaks both.
+*.sh text eol=lf

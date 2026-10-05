@@ -1,33 +1,37 @@
 import { useState, FormEvent } from 'react'
+import { Icon } from '../ui/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useTranslation } from 'react-i18next'
-import { LanguageSelector } from '../LanguageSelector'
+import { AuthLayout, EyeIcon, authInput, authLabel, authPrimary, eyeButton } from './AuthLayout'
+import { useT, type TranslationKey } from '../../i18n'
+
+/** GoTrue's own wording mapped to a key we can show in the reader's language.
+ *  Anything unrecognised is left exactly as the server sent it. */
+function errorKey(msg: string): TranslationKey | null {
+  if (msg.includes('User already registered') || msg.includes('already been registered'))
+    return 'auth.error.alreadyRegistered'
+  if (msg.includes('Password should be at least'))
+    return 'auth.error.passwordTooShort'
+  if (msg.includes('Unable to validate email'))
+    return 'auth.error.invalidEmail'
+  if (msg.includes('Signup is disabled'))
+    return 'auth.error.signupDisabled'
+  if (msg.includes('rate limit') || msg.includes('Too many') || msg.includes('over_email_send_rate_limit'))
+    return 'auth.error.emailRateLimit'
+  return null
+}
 
 export function RegisterForm() {
-  const { t } = useTranslation()
+  const t = useT()
   const { signUp } = useAuth()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  const translateError = (msg: string): string => {
-    if (msg.includes('User already registered') || msg.includes('already been registered'))
-      return t('auth.errors.alreadyRegistered')
-    if (msg.includes('Password should be at least'))
-      return t('auth.errors.weakPassword')
-    if (msg.includes('Unable to validate email'))
-      return t('auth.errors.invalidEmail')
-    if (msg.includes('Signup is disabled'))
-      return t('auth.errors.signupDisabled')
-    if (msg.includes('rate limit') || msg.includes('Too many') || msg.includes('over_email_send_rate_limit'))
-      return t('auth.errors.rateLimitExceeded')
-    return msg
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -42,8 +46,9 @@ export function RegisterForm() {
         setSuccess(true)
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t('auth.errors.registerFailed')
-      setError(translateError(msg))
+      const msg = err instanceof Error ? err.message : t('auth.error.signUpFailed')
+      const key = errorKey(msg)
+      setError(key ? t(key) : msg)
     } finally {
       setLoading(false)
     }
@@ -51,109 +56,99 @@ export function RegisterForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
-        <div className="absolute top-4 right-4 z-20">
-          <LanguageSelector />
-        </div>
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm text-center">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <AuthLayout title={t('auth.registerDone.title')} subtitle={t('auth.registerDone.subtitle')}>
+        <div className="text-center py-2">
+          <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+            <Icon name="check" size={28} className="text-success" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.registerSuccess')}</h2>
-          <p className="text-gray-500 text-sm mb-2">
-            <span className="font-medium text-gray-700">{email}</span> {t('auth.registerSuccessDesc')}
+          <p className="text-fg-muted text-sm mb-1">
+            {t('auth.registerDone.sentBefore')}
+            <span className="font-semibold text-fg-2">{email}</span>
+            {t('auth.registerDone.sentAfter')}
           </p>
-          <p className="text-gray-400 text-xs mb-6">{t('auth.registerSuccessHint')}</p>
-          <Link
-            to="/login"
-            className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors text-sm"
-          >
-            {t('auth.login')}
+          <p className="text-fg-faint text-xs mb-6">
+            {t('auth.registerDone.hint')}
+          </p>
+          <Link to="/login" className="inline-block bg-primary-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-colors text-sm">
+            {t('auth.signIn')}
           </Link>
         </div>
-      </div>
+      </AuthLayout>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
-      <div className="absolute top-4 right-4 z-20">
-        <LanguageSelector />
-      </div>
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
-          <p className="text-gray-500 mt-1 text-sm">{t('auth.createAccount')}</p>
+    <AuthLayout
+      title={t('auth.join.title')}
+      subtitle={t('auth.join.subtitle')}
+      footer={
+        <>
+          {t('auth.haveAccount')}{' '}
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 font-semibold hover:underline">{t('auth.signIn')}</Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={authLabel}>{t('auth.fullName')}</label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            autoFocus
+            autoComplete="name"
+            className={authInput}
+            placeholder={t('auth.fullNamePlaceholder')}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('auth.fullName')}
-            </label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('auth.fullNamePlaceholder')}
-            />
-          </div>
+        <div>
+          <label className={authLabel}>{t('auth.email')}</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className={authInput}
+            placeholder={t('auth.emailPlaceholder')}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('auth.email')}
-            </label>
+        <div>
+          <label className={authLabel}>{t('auth.password')}</label>
+          <div className="relative">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('auth.emailPlaceholder')}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('auth.password')}
-            </label>
-            <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('auth.passwordPlaceholder')}
+              autoComplete="new-password"
+              className={`${authInput} pr-10`}
+              placeholder={t('auth.minChars')}
             />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className={eyeButton} aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
+              <EyeIcon open={showPassword} />
+            </button>
           </div>
+        </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
+        {error && (
+          <div className="bg-danger/10 border border-danger/30 rounded-xl px-3.5 py-3">
+            <p className="text-danger text-sm">{error}</p>
+          </div>
+        )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? t('auth.registering') : t('auth.register')}
-          </button>
-        </form>
+        <button type="submit" disabled={loading} className={`${authPrimary} mt-2`}>
+          {loading ? t('auth.registering') : t('auth.createAccount')}
+        </button>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          {t('auth.hasAccount')}{' '}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">
-            {t('auth.login')}
-          </Link>
+        <p className="text-xs text-fg-faint text-center">
+          {t('auth.inviteHint')}
         </p>
-      </div>
-    </div>
+      </form>
+    </AuthLayout>
   )
 }

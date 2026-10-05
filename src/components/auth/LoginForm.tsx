@@ -1,35 +1,49 @@
 import { useState, FormEvent } from 'react'
+import { Icon } from '../ui/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useTranslation } from 'react-i18next'
-import { LanguageSelector } from '../LanguageSelector'
+import { AuthLayout, EyeIcon, authInput, authLabel, authPrimary, eyeButton } from './AuthLayout'
+import { useT, type TranslationKey } from '../../i18n'
 
 interface LoginFormProps {
   changeMode: boolean
   onChangeModeToggle: (value: boolean) => void
 }
 
+/**
+ * Google sign-in needs GoTrue configured with a Google client (see the
+ * "Google ile giriş" ticket) — until then the button would only produce an
+ * error, so it is behind a build flag. Set VITE_GOOGLE_LOGIN=1 once the
+ * provider is enabled on the server.
+ */
+const GOOGLE_LOGIN = import.meta.env.VITE_GOOGLE_LOGIN === '1'
+
+/** GoTrue's own wording mapped to a key we can show in the reader's language.
+ *  Anything unrecognised is left exactly as the server sent it. */
+function errorKey(msg: string): TranslationKey | null {
+  if (msg.includes('Invalid login credentials')) return 'auth.error.invalidCredentials'
+  if (msg.includes('Email not confirmed')) return 'auth.error.emailNotConfirmed'
+  if (msg.includes('Too many requests')) return 'auth.error.tooManyRequests'
+  if (msg.includes('User not found')) return 'auth.error.userNotFound'
+  return null
+}
+
 export function LoginForm({ changeMode, onChangeModeToggle }: LoginFormProps) {
-  const { t } = useTranslation()
+  const t = useT()
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const [changeEmail, setChangeEmail] = useState('')
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [showOldPassword, setShowOldPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
   const [changed, setChanged] = useState(false)
-
-  const translateError = (msg: string): string => {
-    if (msg.includes('Invalid login credentials')) return t('auth.errors.invalidCredentials')
-    if (msg.includes('Email not confirmed')) return t('auth.errors.emailNotConfirmed')
-    if (msg.includes('Too many requests')) return t('auth.errors.tooManyRequests')
-    if (msg.includes('User not found')) return t('auth.errors.userNotFound')
-    return msg
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -38,8 +52,9 @@ export function LoginForm({ changeMode, onChangeModeToggle }: LoginFormProps) {
     try {
       await signIn(email, password)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t('auth.errors.loginFailed')
-      setError(translateError(msg))
+      const msg = err instanceof Error ? err.message : t('auth.error.signInFailed')
+      const key = errorKey(msg)
+      setError(key ? t(key) : msg)
     } finally {
       setLoading(false)
     }
@@ -49,16 +64,13 @@ export function LoginForm({ changeMode, onChangeModeToggle }: LoginFormProps) {
     e.preventDefault()
     setError('')
     if (newPassword.length < 6) {
-      setError(t('auth.errors.passwordTooShort'))
+      setError(t('auth.error.passwordMin'))
       return
     }
     setLoading(true)
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: changeEmail,
-      password: oldPassword,
-    })
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: changeEmail, password: oldPassword })
     if (signInError) {
-      setError(t('auth.errors.oldPasswordWrong'))
+      setError(t('auth.error.oldPasswordWrong'))
       setLoading(false)
       return
     }
@@ -89,224 +101,124 @@ export function LoginForm({ changeMode, onChangeModeToggle }: LoginFormProps) {
     }
   }
 
+  const errorBox = error && (
+    <div className="bg-danger/10 border border-danger/30 rounded-xl px-3.5 py-3">
+      <p className="text-danger text-sm">{error}</p>
+    </div>
+  )
+
+  // ── Change password mode ───────────────────────────────────────────────────
   if (changeMode) {
+    const leave = () => { onChangeModeToggle(false); setChanged(false); setError(''); setOldPassword(''); setNewPassword(''); setChangeEmail('') }
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 40%, #312e81 100%)' }}
-      >
-        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10%" cy="20%" r="220" fill="white" />
-          <circle cx="85%" cy="75%" r="280" fill="white" />
-          <circle cx="75%" cy="10%" r="150" fill="white" />
-          <circle cx="20%" cy="85%" r="180" fill="white" />
-        </svg>
-        <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="dots3" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1.5" fill="white" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dots3)" />
-        </svg>
-
-        {/* Language selector top-right */}
-        <div className="absolute top-4 right-4 z-20">
-          <LanguageSelector variant="dark" />
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative z-10">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
-            <p className="text-gray-500 mt-1 text-sm">{t('auth.changePassword')}</p>
-          </div>
-
-          {changed ? (
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-gray-700 text-sm font-medium mb-4">{t('auth.passwordUpdated')}</p>
-              <button
-                onClick={() => { onChangeModeToggle(false); setChanged(false); setOldPassword(''); setNewPassword(''); setChangeEmail('') }}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                {t('auth.login')}
-              </button>
+      <AuthLayout title={t('auth.changePassword.title')} subtitle={t('auth.changePassword.subtitle')}>
+        {changed ? (
+          <div className="text-center py-2">
+            <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+              <Icon name="check" size={28} className="text-success" />
             </div>
-          ) : (
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-                <input
-                  type="email"
-                  value={changeEmail}
-                  onChange={(e) => setChangeEmail(e.target.value)}
-                  required
-                  autoFocus
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t('auth.emailPlaceholder')}
-                />
+            <p className="text-fg-2 text-sm font-medium mb-5">{t('auth.changePassword.done')}</p>
+            <button onClick={leave} className={authPrimary}>{t('auth.signIn')}</button>
+          </div>
+        ) : (
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className={authLabel}>{t('auth.email')}</label>
+              <input type="email" value={changeEmail} onChange={(e) => setChangeEmail(e.target.value)} required autoFocus autoComplete="email" className={authInput} placeholder={t('auth.emailPlaceholder')} />
+            </div>
+            <div>
+              <label className={authLabel}>{t('auth.oldPassword')}</label>
+              <div className="relative">
+                <input type={showOldPassword ? 'text' : 'password'} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required autoComplete="current-password" className={`${authInput} pr-10`} placeholder="••••••••" />
+                <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className={eyeButton} aria-label={t('auth.togglePassword')}><EyeIcon open={showOldPassword} /></button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.oldPassword')}</label>
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="••••••••"
-                />
+            </div>
+            <div>
+              <label className={authLabel}>{t('auth.newPassword')}</label>
+              <div className="relative">
+                <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} autoComplete="new-password" className={`${authInput} pr-10`} placeholder={t('auth.minChars')} />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className={eyeButton} aria-label={t('auth.togglePassword')}><EyeIcon open={showNewPassword} /></button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.newPassword')}</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t('auth.newPasswordPlaceholder')}
-                />
-              </div>
-
-              {error && (
-                <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? t('auth.updating') : t('auth.updatePassword')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { onChangeModeToggle(false); setError(''); setOldPassword(''); setNewPassword('') }}
-                className="w-full text-sm text-gray-500 hover:text-gray-700"
-              >
-                {t('common.back')}
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
+            </div>
+            {errorBox}
+            <button type="submit" disabled={loading} className={authPrimary}>
+              {loading ? t('auth.updating') : t('auth.updatePassword')}
+            </button>
+            <button type="button" onClick={leave} className="w-full text-sm text-fg-muted hover:text-fg-2 py-2 transition-colors">
+              ← {t('auth.backToSignIn')}
+            </button>
+          </form>
+        )}
+      </AuthLayout>
     )
   }
 
+  // ── Sign in ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 40%, #312e81 100%)' }}
+    <AuthLayout
+      title={t('auth.welcomeBack')}
+      subtitle={t('auth.signInSubtitle')}
+      footer={
+        <>
+          {t('auth.noAccount')}{' '}
+          <Link to="/register" className="text-primary-600 dark:text-primary-400 font-semibold hover:underline">{t('auth.register')}</Link>
+        </>
+      }
     >
-      {/* Decorative blobs */}
-      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="10%" cy="20%" r="220" fill="white" />
-        <circle cx="85%" cy="75%" r="280" fill="white" />
-        <circle cx="75%" cy="10%" r="150" fill="white" />
-        <circle cx="20%" cy="85%" r="180" fill="white" />
-      </svg>
-      {/* Grid dots */}
-      <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.5" fill="white" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#dots)" />
-      </svg>
-
-      {/* Language selector top-right */}
-      <div className="absolute top-4 right-4 z-20">
-        <LanguageSelector variant="dark" />
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">Fira</h1>
-          <p className="text-gray-500 mt-1 text-sm">{t('auth.appSubtitle')}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={t('auth.emailPlaceholder')}
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">{t('auth.password')}</label>
-              <button
-                type="button"
-                onClick={() => { onChangeModeToggle(true); setChangeEmail(email); setError('') }}
-                className="text-xs text-blue-600 hover:underline"
-              >
-                {t('auth.changePasswordLink')}
-              </button>
-            </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
-          )}
-
+      {GOOGLE_LOGIN && (
+        <>
           <button
-            type="submit"
+            type="button"
+            onClick={handleGoogle}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full flex items-center justify-center gap-3 border border-line rounded-xl px-4 py-3 text-sm font-medium text-fg-2 hover:bg-raised disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? t('auth.loggingIn') : t('auth.login')}
+            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 48 48" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.8 6.1C12.4 13.4 17.7 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
+              <path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.8-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.1z"/>
+              <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.3-7.7 2.3-6.3 0-11.6-4-13.5-9.4l-7.8 6.1C6.6 42.5 14.6 48 24 48z"/>
+            </svg>
+            {t('auth.googleSignIn')}
           </button>
-        </form>
-
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-line" /></div>
+            <div className="relative flex justify-center"><span className="text-xs text-fg-faint bg-surface px-3">{t('auth.orEmail')}</span></div>
           </div>
-          <div className="relative flex justify-center text-xs text-gray-400 bg-white px-2 w-fit mx-auto">
-            {t('common.or')}
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={authLabel}>{t('auth.email')}</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus autoComplete="email" className={authInput} placeholder={t('auth.emailPlaceholder')} />
+        </div>
+
+        <div>
+          <label className={authLabel}>{t('auth.password')}</label>
+          <div className="relative">
+            <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" className={`${authInput} pr-10`} placeholder="••••••••" />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className={eyeButton} aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
+              <EyeIcon open={showPassword} />
+            </button>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.8 6.1C12.4 13.4 17.7 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
-            <path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.8-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.1z"/>
-            <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.3-7.7 2.3-6.3 0-11.6-4-13.5-9.4l-7.8 6.1C6.6 42.5 14.6 48 24 48z"/>
-          </svg>
-          {t('auth.googleLogin')}
+        {errorBox}
+
+        <button type="submit" disabled={loading} className={authPrimary}>
+          {loading ? t('auth.signingIn') : t('auth.signIn')}
         </button>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          {t('auth.noAccount')}{' '}
-          <Link to="/register" className="text-blue-600 font-medium hover:underline">
-            {t('auth.register')}
-          </Link>
-        </p>
-      </div>
-    </div>
+        {/* Comes AFTER the submit button in tab order: e-mail → password → sign in → this link */}
+        <button
+          type="button"
+          onClick={() => { onChangeModeToggle(true); setChangeEmail(email); setError('') }}
+          className="w-full text-center text-xs text-fg-muted hover:text-primary-600 dark:hover:text-primary-400 font-medium hover:underline py-1"
+        >
+          {t('auth.changeMyPassword')}
+        </button>
+      </form>
+    </AuthLayout>
   )
 }

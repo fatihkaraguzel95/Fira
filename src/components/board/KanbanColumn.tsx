@@ -1,44 +1,49 @@
 import { useState } from 'react'
+import { Icon } from '../ui/Icon'
+import { isLeavingAfterCelebration } from '../../lib/celebrate'
 import { useDroppable } from '@dnd-kit/core'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useNavigate } from 'react-router-dom'
+import { openTicket } from '../../lib/nav'
 import type { Ticket, TicketStatus } from '../../types'
 import { TicketCard } from './TicketCard'
+import { ColumnQuickAdd } from './ColumnQuickAdd'
 import { PriorityFlagBadge } from '../ticket/PriorityPicker'
-import { useTranslation } from 'react-i18next'
+import { StatusIndicator } from '../ticket/StatusIndicator'
+import { useT } from '../../i18n'
+import { displayDate, useDateFormat } from '../../lib/time'
 
 // ─── Compact archived card ────────────────────────────────────────────────────
 function ArchivedCard({ ticket, onUnarchive }: { ticket: Ticket; onUnarchive: () => void }) {
-  const { t, i18n } = useTranslation()
+  const t = useT()
+  useDateFormat()   // repaint when the chosen date format changes
   const navigate = useNavigate()
   const dueDate = ticket.due_date ? new Date(ticket.due_date) : null
 
   return (
-    <div className="group flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800/40 border border-slate-100 dark:border-gray-700/50 hover:border-slate-200 dark:hover:border-gray-600/60 transition-colors">
-      <svg className="w-3 h-3 text-slate-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-      </svg>
+    <div className="group flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-field/40 border border-slate-100 dark:border-gray-700/50 hover:border-slate-200 dark:hover:border-gray-600/60 transition-colors">
+      <Icon name="archive" className="text-fg-faint" />
       <button
         className="flex-1 text-left min-w-0"
-        onClick={() => navigate(`/ticket/${ticket.id}`)}
+        onClick={() => openTicket(navigate, ticket.id)}
       >
-        <p className="text-[11px] text-slate-400 dark:text-gray-500 truncate leading-tight">{ticket.title}</p>
+        <p className="text-xs text-fg-faint truncate leading-tight">{ticket.title}</p>
       </button>
       <div className="flex items-center gap-1 flex-shrink-0">
         <PriorityFlagBadge priority={ticket.priority} size="sm" />
         {dueDate && (
-          <span className="text-[10px] text-slate-300 dark:text-gray-600 tabular-nums">
-            {dueDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
+          <span className="text-2xs text-fg-faint tabular-nums">
+            {displayDate(ticket.due_date!)}
           </span>
         )}
         <button
           onClick={onUnarchive}
-          title={t('kanban.unarchive')}
-          className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
+          title={t('board.column.unarchive')}
+          className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-md text-fg-faint hover:text-primary-600 dark:hover:text-primary-400"
         >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-          </svg>
+          <Icon name="undo" />
         </button>
       </div>
     </div>
@@ -50,89 +55,129 @@ interface Props {
   status: TicketStatus
   tickets: Ticket[]
   archivedTickets: Ticket[]
-  onArchive: (id: string, archived: boolean) => void
+  onArchive?: (id: string, archived: boolean) => void
+  canDeleteTicket?: (t: Ticket) => boolean
+  canDrag?: boolean
+  teamId?: string | null
+  canAssign?: boolean
+  /** Column header can be dragged to reorder statuses. */
+  canReorder?: boolean
+  /** A card is being dragged somewhere on the board — only then do empty columns show a drop hint. */
+  dragActive?: boolean
+  /** List the column belongs to — needed to create a ticket straight from the column. */
+  projectId?: string
+  canCreate?: boolean
+  /** Set when a filter (not emptiness) is why this column has nothing in it. */
+  hiddenNotice?: { label: string; cta: string; onShow?: () => void } | null
+  /** Unfiltered task count for this status — badge shows "visible/total" when they differ. */
+  totalCount?: number | null
 }
 
-export function KanbanColumn({ status, tickets, archivedTickets, onArchive }: Props) {
-  const { t } = useTranslation()
+export function KanbanColumn({ status, tickets, archivedTickets, onArchive, canDeleteTicket, canDrag = true, teamId = null, canAssign = false, canReorder = false, dragActive = false, projectId, canCreate = false, hiddenNotice = null, totalCount = null }: Props) {
+  const t = useT()
   const { setNodeRef, isOver } = useDroppable({ id: status.id })
+  const sortable = useSortable({ id: `col:${status.id}`, disabled: !canReorder })
+  const colStyle = { transform: CSS.Translate.toString(sortable.transform), transition: sortable.transition, opacity: sortable.isDragging ? 0.6 : 1 }
   const [showArchived, setShowArchived] = useState(false)
+  const empty = tickets.length === 0
 
   return (
-    <div className="flex flex-col w-[300px] flex-shrink-0 min-h-0">
+    <div role="region" aria-label={t('board.column.regionLabel', { name: status.name })} ref={sortable.setNodeRef} style={colStyle} className="flex flex-col w-[300px] flex-shrink-0 min-h-0 h-full">
+      {/* No card-like container: columns are implied by the alignment of the cards themselves. */}
       <div
         ref={setNodeRef}
-        className={`
-          flex flex-col rounded-2xl border overflow-hidden transition-all duration-150
-          ${isOver
-            ? 'ring-2 ring-primary-400 ring-offset-2 bg-primary-50/50 dark:bg-primary-950/20 border-primary-300 dark:border-primary-700'
-            : 'bg-slate-50/80 dark:bg-gray-900/60 border-slate-200 dark:border-gray-700/80'
-          }
-        `}
+        className={`flex-1 min-h-0 flex flex-col rounded-xl transition-colors duration-150 ${
+          isOver ? 'bg-primary-50/50 dark:bg-primary-950/20 ring-1 ring-primary-300/70 dark:ring-primary-700/70' : ''
+        }`}
       >
-        {/* Status color top accent bar */}
-        <div className="h-0.5 w-full flex-shrink-0" style={{ backgroundColor: status.color }} />
 
         {/* Column header */}
-        <div className="px-4 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: status.color }}
-            />
-            <h3 className="font-semibold text-slate-700 dark:text-gray-200 text-sm leading-none">
+        {/* The whole header is the drag activator: press and drag the title to reorder columns */}
+        <div
+          {...(canReorder ? sortable.attributes : {})}
+          {...(canReorder ? sortable.listeners : {})}
+          title={canReorder ? t('board.column.dragHint') : undefined}
+          aria-label={canReorder ? t('board.column.reorderLabel', { name: status.name }) : undefined}
+          className={`px-1.5 py-2 flex items-center justify-between flex-shrink-0 select-none ${canReorder ? 'cursor-move' : ''}`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <StatusIndicator status={status} size={15} />
+            <h2 className="font-semibold text-fg-2 text-sm leading-none truncate">
               {status.name}
-            </h3>
+            </h2>
           </div>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-gray-700 text-slate-600 dark:text-gray-300 tabular-nums min-w-[22px] text-center">
+          {/* Always rendered — hiding it on empty columns made their headers shorter
+              than the rest, so the whole column sat a few pixels higher. Zero is
+              just kept quiet instead of removed. */}
+          {/* When a filter hides part of the column, say so: "3/120". Without it
+              there was no sign that 117 tasks existed but were filtered out. */}
+          <span
+            className={`text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums min-w-[22px] text-center flex-shrink-0 ${
+              tickets.length > 0 ? 'bg-line text-fg-2' : 'text-fg-faint'
+            }`}
+            title={totalCount != null && totalCount !== tickets.length
+              ? t('board.column.countHint', { total: totalCount, shown: tickets.length })
+              : undefined}
+          >
             {tickets.length}
+            {totalCount != null && totalCount !== tickets.length && (
+              <span className="font-normal opacity-60">/{totalCount}</span>
+            )}
           </span>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-slate-200/70 dark:bg-gray-700/50 mx-3" />
-
         {/* Card list area */}
-        <div className="flex-1 p-3 space-y-2 min-h-[120px]">
+        <div data-card-list className="flex-1 min-h-[120px] overflow-y-auto scrollbar-thin px-0.5 pb-3 space-y-2">
+          {canCreate && projectId && <ColumnQuickAdd status={status} projectId={projectId} teamId={teamId} />}
           <SortableContext items={tickets.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             {tickets.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} onArchive={onArchive} />
+              <TicketCard key={ticket.id} ticket={ticket} onArchive={onArchive} canDelete={canDeleteTicket ? canDeleteTicket(ticket) : true} canDrag={canDrag} teamId={teamId} canAssign={canAssign} leaving={isLeavingAfterCelebration(ticket.id)} />
             ))}
           </SortableContext>
 
-          {tickets.length === 0 && (
-            <div
-              className={`flex flex-col items-center justify-center h-20 rounded-xl border-2 border-dashed transition-colors gap-1 ${
-                isOver
-                  ? 'border-primary-300 dark:border-primary-700 text-primary-400 dark:text-primary-500 bg-primary-50/50 dark:bg-primary-950/10'
-                  : 'border-slate-200 dark:border-gray-700 text-slate-300 dark:text-gray-600'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="text-[11px] font-medium">{t('kanban.dropHere')}</span>
-            </div>
+          {empty && (
+            dragActive ? (
+              <div
+                className={`flex flex-col items-center justify-center h-20 rounded-xl border-2 border-dashed transition-colors gap-1 ${
+                  isOver
+                    ? 'border-primary-300 dark:border-primary-700 text-primary-400 dark:text-primary-500 bg-primary-50/50 dark:bg-primary-950/10'
+                    : 'border-line text-fg-faint'
+                }`}
+              >
+                <Icon name="plus" />
+                <span className="text-xs font-medium">{t('board.dropHere')}</span>
+              </div>
+            ) : (
+              /* "No data" placeholder — same dashed frame as the "Durum Ekle" column button */
+              <div className="flex flex-col items-center justify-center gap-1.5 py-8 rounded-xl border-2 border-dashed border-line text-fg-faint select-none">
+                <Icon name="inbox" size={28} className="opacity-40" />
+                <span className="text-xs">{hiddenNotice ? hiddenNotice.label : t('board.column.empty')}</span>
+                {hiddenNotice && (hiddenNotice.onShow ? (
+                  <button
+                    type="button"
+                    onClick={hiddenNotice.onShow}
+                    className="mt-1 text-2xs font-medium px-2 py-1 rounded-md border border-line/70 bg-transparent text-fg-muted hover:text-fg hover:bg-raised/60 transition-colors"
+                  >
+                    {hiddenNotice.cta}
+                  </button>
+                ) : (
+                  <span className="text-2xs opacity-70 text-center px-2">{hiddenNotice.cta}</span>
+                ))}
+              </div>
+            )
           )}
         </div>
 
         {/* Archived section */}
         {archivedTickets.length > 0 && (
-          <div className="border-t border-slate-200/70 dark:border-gray-700/50 px-3 pt-2 pb-3 flex-shrink-0">
+          <div className="border-t border-line-soft px-1 pt-2 pb-3 flex-shrink-0">
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className="w-full flex items-center gap-1.5 text-xs text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-400 transition-colors mb-1.5 group"
+              className="w-full flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-2 transition-colors mb-1.5 group"
             >
-              <svg
-                className={`w-3 h-3 transition-transform flex-shrink-0 ${showArchived ? 'rotate-90' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <svg className="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              <span className="font-medium">{archivedTickets.length} {t('kanban.archived')}</span>
+              <Icon name="chevronRight" className={`transition-transform ${showArchived ? 'rotate-90' : ''}`} />
+              <Icon name="archive" className="opacity-60" />
+              <span className="font-medium">{t('board.column.archivedCount', { n: archivedTickets.length })}</span>
             </button>
 
             {showArchived && (
@@ -141,7 +186,7 @@ export function KanbanColumn({ status, tickets, archivedTickets, onArchive }: Pr
                   <ArchivedCard
                     key={ticket.id}
                     ticket={ticket}
-                    onUnarchive={() => onArchive(ticket.id, false)}
+                    onUnarchive={() => onArchive?.(ticket.id, false)}
                   />
                 ))}
               </div>

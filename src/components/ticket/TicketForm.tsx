@@ -1,10 +1,11 @@
+import { uuid } from '../../lib/uuid'
 import { FormEvent, useRef, useState } from 'react'
 import type { CreateTicketInput, TicketPriority, TicketStatus } from '../../types'
 import { useCreateTicket } from '../../hooks/useTickets'
 import { useUsers } from '../../hooks/useUsers'
+import { useT } from '../../i18n'
 import { DescriptionEditor } from './DescriptionEditor'
 import { PriorityPicker } from './PriorityPicker'
-import { useTranslation } from 'react-i18next'
 
 interface Props {
   onClose: () => void
@@ -13,16 +14,17 @@ interface Props {
 }
 
 export function TicketForm({ onClose, statuses, projectId }: Props) {
-  const { t } = useTranslation()
+  const t = useT()
   const { mutateAsync: createTicket, isPending } = useCreateTicket()
   const { data: users } = useUsers()
 
-  const uploadId = useRef(crypto.randomUUID())
+  // Temp id for image uploads before ticket exists
+  const uploadId = useRef(uuid())
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [statusId, setStatusId] = useState(statuses[0]?.id ?? '')
-  const [priority, setPriority] = useState<TicketPriority>('medium')
+  const [priority, setPriority] = useState<TicketPriority | null>('medium')
   const [assigneeIds, setAssigneeIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState('')
 
@@ -50,11 +52,11 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
-          <h2 className="text-lg font-semibold text-gray-900">{t('ticket.newTicket')}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-xl">
+          <h2 className="text-lg font-semibold text-gray-900">{t('ticket.form.title')}</h2>
+          <button onClick={onClose} className="text-fg-faint hover:text-gray-600 text-lg leading-none">✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
@@ -64,14 +66,14 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
               {/* Title */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  {t('ticket.title')} <span className="text-red-500">*</span>
+                  {t('ticket.form.titleLabel')} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t('ticket.titlePlaceholder')}
+                  placeholder={t('ticket.form.titlePlaceholder')}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -83,7 +85,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
                   value={description}
                   onChange={setDescription}
                   ticketId={uploadId.current}
-                  placeholder={t('ticket.descriptionPlaceholder')}
+                  placeholder={t('ticket.form.descPlaceholder')}
                   minHeight="180px"
                 />
               </div>
@@ -93,7 +95,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
             <div className="w-56 flex-shrink-0 p-5 space-y-5">
               {/* Status */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.status')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-2 uppercase tracking-wide">{t('ticket.prop.status')}</label>
                 <select
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
@@ -107,32 +109,32 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
 
               {/* Priority */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.priorityLabel')}</label>
-                <PriorityPicker value={priority} onChange={(p) => setPriority(p as TicketPriority)} />
+                <label className="block text-xs font-medium text-fg-muted mb-2 uppercase tracking-wide">{t('ticket.prop.priority')}</label>
+                <PriorityPicker value={priority} onChange={setPriority} />
               </div>
 
               {/* Assignees */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.assignees')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-2 uppercase tracking-wide">{t('ticket.prop.assignees')}</label>
                 <div className="border border-gray-200 rounded-lg p-2 max-h-36 overflow-y-auto space-y-1">
                   {users?.map((u) => (
-                    <label key={u.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5">
+                    <label key={u.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-md px-1 py-0.5">
                       <input
                         type="checkbox"
                         checked={assigneeIds.includes(u.id)}
                         onChange={() => toggleAssignee(u.id)}
-                        className="rounded accent-blue-500"
+                        className="rounded-md accent-blue-500"
                       />
                       <span className="text-sm text-gray-700">{u.full_name || u.email}</span>
                     </label>
                   ))}
-                  {!users?.length && <p className="text-xs text-gray-400">{t('ticket.noUsers')}</p>}
+                  {!users?.length && <p className="text-xs text-fg-faint">{t('ticket.form.noUsers')}</p>}
                 </div>
               </div>
 
               {/* Due Date */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{t('ticket.dueDate')}</label>
+                <label className="block text-xs font-medium text-fg-muted mb-2 uppercase tracking-wide">{t('ticket.prop.dueDate')}</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -144,7 +146,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
             <button
               type="button"
               onClick={onClose}
@@ -157,7 +159,7 @@ export function TicketForm({ onClose, statuses, projectId }: Props) {
               disabled={isPending}
               className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {isPending ? t('common.creating') : t('common.create')}
+              {isPending ? t('ticket.form.creating') : t('ticket.form.create')}
             </button>
           </div>
         </form>

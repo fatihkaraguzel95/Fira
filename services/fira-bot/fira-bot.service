@@ -1,0 +1,21 @@
+[Unit]
+Description=Fira botu (Telegram'dan gorev acma)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sakgun
+WorkingDirectory=/home/sakgun/fira-bot
+Environment=FIRA_BOT_ENV=/etc/fira-bot.env
+ExecStart=/home/sakgun/.nvm/versions/node/v20.20.1/bin/node /home/sakgun/fira-bot/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+# Sunucu paylasimli: servis kendi disina yazmasin
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

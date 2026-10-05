@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { usePopupLayer } from '../../lib/popups'
 import { createPortal } from 'react-dom'
 
 interface MenuItem {
@@ -18,6 +19,7 @@ interface Props {
 export function ContextMenu({ items, x, y, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null)
 
+  usePopupLayer(true, ref, onClose)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
@@ -38,7 +40,7 @@ export function ContextMenu({ items, x, y, onClose }: Props) {
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[9999] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 w-44"
+      className="fixed z-[9999] bg-surface border border-line rounded-xl shadow-lg py-1 w-44"
       style={{ left: adjustedX, top: adjustedY }}
     >
       {items.map((item, i) => (
@@ -47,8 +49,8 @@ export function ContextMenu({ items, x, y, onClose }: Props) {
           onClick={() => { item.onClick(); onClose() }}
           className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left ${
             item.danger
-              ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+              ? 'text-danger hover:bg-danger/10'
+              : 'text-fg-2 hover:bg-raised'
           }`}
         >
           {item.icon && <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center">{item.icon}</span>}

@@ -1,4 +1,8 @@
 import type { Profile } from '../../types'
+import { displayUrl } from '../../lib/storage'
+import { useT } from '../../i18n'
+import { useImageOk } from '../../hooks/useImageOk'
+import { useAvatarColor } from '../../lib/avatarTone'
 
 interface Props {
   user: Profile | null
@@ -13,7 +17,7 @@ const sizes = {
 }
 
 function getInitials(user: Profile): string {
-  const name = user.full_name || user.email
+  const name = user.full_name || user.email || '?'
   return name
     .split(' ')
     .map((part) => part[0])
@@ -22,39 +26,43 @@ function getInitials(user: Profile): string {
     .slice(0, 2)
 }
 
-function getColor(id: string): string {
-  const colors = [
-    'bg-blue-500',
-    'bg-purple-500',
-    'bg-green-500',
-    'bg-orange-500',
-    'bg-pink-500',
-    'bg-teal-500',
-  ]
-  const idx = id.charCodeAt(0) % colors.length
-  return colors[idx]
-}
-
 export function UserAvatar({ user, size = 'md', showName = false }: Props) {
+  const t = useT()
+  const photo = useImageOk(user?.avatar_url)
+  const tone = useAvatarColor(user?.id)
   if (!user) return null
+  // Someone who only exists because their work was imported: dashed ring, so it
+  // is obvious at a glance that this person has no account here (yet).
+  const imported = user.source === 'import'
+  const name = user.full_name || user.email || t('ticketExtra.unknownPerson')
+  const title = imported
+    ? user.imported_from
+      ? t('ticketExtra.avatar.importedTitleFrom', { name, source: user.imported_from })
+      : t('ticketExtra.avatar.importedTitle', { name })
+    : undefined
 
   return (
-    <div className="flex items-center gap-2">
-      {user.avatar_url ? (
+    <div className="flex items-center gap-2" title={title}>
+      {photo.ok ? (
         <img
-          src={user.avatar_url}
-          alt={user.full_name || user.email}
-          className={`${sizes[size]} rounded-full object-cover flex-shrink-0`}
+          src={displayUrl(user.avatar_url) ?? ''}
+          alt={user.full_name || user.email || ''}
+          onError={photo.onError}
+          className={`${sizes[size]} rounded-full object-cover flex-shrink-0 ${imported ? 'ring-1 ring-dashed ring-fg-faint opacity-80' : ''}`}
         />
       ) : (
         <div
-          className={`${sizes[size]} ${getColor(user.id)} rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0`}
+          style={imported ? undefined : { backgroundColor: tone }}
+          className={`${sizes[size]} ${imported ? 'bg-line text-fg-muted border border-dashed border-fg-faint' : 'text-white'} rounded-full flex items-center justify-center font-semibold flex-shrink-0`}
         >
           {getInitials(user)}
         </div>
       )}
       {showName && (
-        <span className="text-sm text-gray-700">{user.full_name || user.email}</span>
+        <span className="text-sm text-fg-2">
+          {user.full_name || user.email}
+          {imported && <span className="text-fg-faint"> · {t('ticketExtra.avatar.noAccount')}</span>}
+        </span>
       )}
     </div>
   )

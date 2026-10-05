@@ -2,6 +2,220 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ölçekler (#fc1659d8): köşe yarıçapı ve gölge üçer değer — tailwind.config.js ile aynı.
+   Odak/seçim halkaları (0 0 0 Npx) ve yapışkan sütunun kenar gölgesi yükseklik basamağı değil. */
+:root {
+  --radius-md: 0.375rem;  /* 6 px */
+  --radius-lg: 0.5rem;    /* 8 px */
+  --radius-xl: 0.75rem;   /* 12 px */
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px -6px rgba(0,0,0,0.16), 0 3px 6px -3px rgba(0,0,0,0.08);
+  --shadow-2xl: 0 25px 60px -12px rgba(0,0,0,0.28);
+}
+
+/* ── Theme tokens ───────────────────────────────────────────────────────────
+   RGB channels (not colours) so Tailwind opacity modifiers work: bg-danger/10.
+   Light = slate scale, Dark = gray scale. Add a new theme by adding a block. */
+:root {
+  --c-app: 248 250 252;      /* slate-50  */
+  --c-nav: 237 241 246;      /* rail — the greyest step (#4A136310, ClickUp) */
+  --c-panel: 243 246 250;    /* level-2 panel — between rail and content */
+  --c-surface: 255 255 255;
+  --c-content: 248 250 252;  /* içerik yaprağı — klasik kabukta app ile aynı */
+  --c-field: 255 255 255;
+  --c-raised: 241 245 249;   /* slate-100 */
+  --c-fg: 15 23 42;          /* slate-900 */
+  --c-fg-2: 51 65 85;        /* slate-700 */
+  --c-fg-muted: 71 85 105;   /* slate-600 — 7.3:1 on white */
+  --c-fg-faint: 100 116 139; /* slate-500 — 4.8:1 on white (AA small text) */
+  --c-line: 226 232 240;     /* slate-200 */
+  --c-line-soft: 241 245 249;/* slate-100 */
+  --c-danger: 220 38 38;     /* red-600   */
+  /* Açık temada yazı olarak da kullanılıyorlar: green-600 beyazda 3.3:1, amber-600 3.2:1 idi;
+     700 tonları 5:1 civarı (AA). Koyu tema tonları zaten yeterli (#990dfec5). */
+  --c-success: 21 128 61;    /* green-700 */
+  --c-warning: 180 83 9;     /* amber-700 */
+  --c-info: 37 99 235;       /* blue-600  */
+}
+.dark {
+  --c-app: 17 24 39;         /* gray-900 — content lighter than before (#4A136310) */
+  --c-nav: 7 11 20;          /* rail — darkest */
+  --c-panel: 12 17 29;       /* level-2 panel */
+  --c-surface: 24 32 48;     /* cards/modals a step above the content */
+  --c-content: 17 24 39;     /* içerik yaprağı — klasik kabukta app ile aynı */
+  --c-field: 31 41 55;       /* gray-800  */
+  --c-raised: 37 47 66;      /* hover fills */
+  --c-fg: 243 244 246;       /* gray-100  */
+  --c-fg-2: 209 213 219;     /* gray-300  */
+  --c-fg-muted: 176 184 196; /* between gray-400/300 — 8.3:1 on gray-900 */
+  --c-fg-faint: 156 163 175; /* gray-400 — 6.7:1 on gray-900 */
+  --c-line: 55 65 81;        /* gray-700  */
+  --c-line-soft: 31 41 55;   /* gray-800  */
+  --c-danger: 248 113 113;   /* red-400   */
+  --c-success: 74 222 128;   /* green-400 */
+  --c-warning: 251 191 36;   /* amber-400 */
+  --c-info: 96 165 250;      /* blue-400  */
+}
+
+/* ── Renk paletleri (#e8d26977) ─────────────────────────────────────────────
+   Profil > Temalar > "Renk paleti". Yalnız nötr tokenlar değişir; marka rengi
+   (`primary-*`) sabit. `<html data-palette>` (localStorage, usePalette.ts);
+   varsayılan palette bayrak yazılmaz. Açık blok `:not(.dark)` ile sınırlı, yoksa
+   özgüllüğü `.dark`ı ezerdi; yumuşak kabuğun kendi tonları her palet için ayrıca
+   tanımlı (şerit/panel/yaprak). Yazı tonları açık zeminde en az 4.5:1 (AA);
+   "Yüksek kontrast" çizgileri de 3:1'in üstüne çıkarır (WCAG 1.4.11). */
+:root[data-palette="graphite"]:not(.dark) {
+  --c-app: 250 250 250; --c-nav: 239 239 241; --c-panel: 244 244 245;
+  --c-surface: 255 255 255; --c-field: 255 255 255; --c-raised: 244 244 245; --c-content: 250 250 250;
+  --c-fg: 24 24 27; --c-fg-2: 63 63 70; --c-fg-muted: 82 82 91; --c-fg-faint: 107 107 116;
+  --c-line: 228 228 231; --c-line-soft: 244 244 245;
+}
+:root[data-palette="graphite"].dark {
+  --c-app: 24 24 27; --c-nav: 9 9 11; --c-panel: 17 17 19;
+  --c-surface: 32 32 36; --c-field: 39 39 42; --c-raised: 45 45 50; --c-content: 24 24 27;
+  --c-fg: 244 244 245; --c-fg-2: 212 212 216; --c-fg-muted: 177 177 184; --c-fg-faint: 150 150 158;
+  --c-line: 63 63 70; --c-line-soft: 39 39 42;
+}
+:root[data-palette="graphite"][data-shell="soft"]:not(.dark) { --c-nav: 228 228 231; --c-panel: 228 228 231; --c-content: 252 252 252; }
+:root[data-palette="graphite"][data-shell="soft"].dark { --c-nav: 9 9 11; --c-panel: 9 9 11; --c-content: 22 22 25; }
+:root[data-palette="sand"]:not(.dark) {
+  --c-app: 250 250 249; --c-nav: 240 238 235; --c-panel: 245 244 241;
+  --c-surface: 255 255 255; --c-field: 255 255 255; --c-raised: 245 245 244; --c-content: 250 250 249;
+  --c-fg: 28 25 23; --c-fg-2: 68 64 60; --c-fg-muted: 87 83 78; --c-fg-faint: 113 106 101;
+  --c-line: 231 229 228; --c-line-soft: 245 245 244;
+}
+:root[data-palette="sand"].dark {
+  --c-app: 28 25 23; --c-nav: 14 12 11; --c-panel: 21 19 17;
+  --c-surface: 41 37 36; --c-field: 48 44 42; --c-raised: 56 52 49; --c-content: 28 25 23;
+  --c-fg: 245 245 244; --c-fg-2: 214 211 209; --c-fg-muted: 181 176 171; --c-fg-faint: 161 155 150;
+  --c-line: 68 64 60; --c-line-soft: 41 37 36;
+}
+:root[data-palette="sand"][data-shell="soft"]:not(.dark) { --c-nav: 231 228 223; --c-panel: 231 228 223; --c-content: 252 251 249; }
+:root[data-palette="sand"][data-shell="soft"].dark { --c-nav: 14 12 11; --c-panel: 14 12 11; --c-content: 26 23 21; }
+:root[data-palette="midnight"]:not(.dark) {
+  --c-app: 245 248 253; --c-nav: 229 236 247; --c-panel: 237 242 250;
+  --c-surface: 255 255 255; --c-field: 255 255 255; --c-raised: 236 242 251; --c-content: 245 248 253;
+  --c-fg: 12 22 45; --c-fg-2: 43 58 90; --c-fg-muted: 64 80 112; --c-fg-faint: 90 106 138;
+  --c-line: 218 227 240; --c-line-soft: 236 242 251;
+}
+:root[data-palette="midnight"].dark {
+  --c-app: 11 18 36; --c-nav: 5 9 20; --c-panel: 8 13 28;
+  --c-surface: 18 28 52; --c-field: 23 35 63; --c-raised: 30 44 76; --c-content: 11 18 36;
+  --c-fg: 236 241 250; --c-fg-2: 199 210 230; --c-fg-muted: 165 178 204; --c-fg-faint: 141 156 186;
+  --c-line: 42 58 94; --c-line-soft: 23 35 63;
+}
+:root[data-palette="midnight"][data-shell="soft"]:not(.dark) { --c-nav: 221 230 244; --c-panel: 221 230 244; --c-content: 250 252 255; }
+:root[data-palette="midnight"][data-shell="soft"].dark { --c-nav: 5 9 20; --c-panel: 5 9 20; --c-content: 14 22 42; }
+:root[data-palette="contrast"]:not(.dark) {
+  --c-app: 255 255 255; --c-nav: 240 240 240; --c-panel: 246 246 246;
+  --c-surface: 255 255 255; --c-field: 255 255 255; --c-raised: 235 235 235; --c-content: 255 255 255;
+  --c-fg: 0 0 0; --c-fg-2: 20 20 20; --c-fg-muted: 45 45 45; --c-fg-faint: 70 70 70;
+  --c-line: 118 118 118; --c-line-soft: 170 170 170;
+}
+:root[data-palette="contrast"].dark {
+  --c-app: 0 0 0; --c-nav: 10 10 10; --c-panel: 16 16 16;
+  --c-surface: 18 18 18; --c-field: 24 24 24; --c-raised: 38 38 38; --c-content: 0 0 0;
+  --c-fg: 255 255 255; --c-fg-2: 240 240 240; --c-fg-muted: 215 215 215; --c-fg-faint: 190 190 190;
+  --c-line: 150 150 150; --c-line-soft: 90 90 90;
+}
+:root[data-palette="contrast"][data-shell="soft"]:not(.dark) { --c-nav: 232 232 232; --c-panel: 232 232 232; --c-content: 255 255 255; }
+:root[data-palette="contrast"][data-shell="soft"].dark { --c-nav: 10 10 10; --c-panel: 10 10 10; --c-content: 0 0 0; }
+
+/* ── Pencereyi kaplayan katman (#c94673c2) ───────────────────────────────────
+   `space-y-*` her kardeşe üst kenar boşluğu verir; içine takılan `fixed inset-0`
+   bir karartma da bunu alıp o kadar aşağıdan başlıyordu (üstte açık bir şerit).
+   Bu katmanların kenar boşluğu olmaz. */
+.fixed.inset-0 { margin: 0 !important; }
+
+/* ── Dokunma hedefi (#fc1659d8) ──────────────────────────────────────────────
+   Simge düğmeleri en az 24×24 görünür (WCAG 2.5.8). Dokunmatik ekranda (pointer: coarse)
+   görünmez bir dolgu hedefi 40×40'a çıkarır; yerleşim değişmez. Konumlanmamış öğeye
+   `relative` verilir — absolute/fixed/sticky olanlar zaten konumlu. */
+.tap:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+@media (pointer: coarse) {
+  .tap::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: max(100%, 40px); height: max(100%, 40px); transform: translate(-50%, -50%);
+  }
+}
+
+/* ── Yazı boyutu ve yoğunluk (#9b2229bb) ─────────────────────────────────────
+   Bayraklar `<html>`'de (useDisplay.ts, localStorage — ilk boyamadan önce).
+   Yazı boyutu kök ölçek: rem ile verilen yazı ve boşluk birlikte büyür.
+   Sıkı yoğunluk yalnız pano kartını ve kenar çubuğu ağacını daraltır; liste
+   görünümünün kendi yoğunluk seçimi var. Kancalar: data-board-card, data-card-cover,
+   data-card-list, data-tree-row, data-tree-item. */
+:root[data-font-size="sm"] { font-size: 15px; }
+:root[data-font-size="lg"] { font-size: 17px; }
+:root[data-font-size="xl"] { font-size: 18px; }
+:root[data-density="compact"] [data-board-card] { padding: 0.5rem 0.625rem; }
+/* Kapak görseli kartın dolgusunu negatif kenar boşluğuyla taşıyor: sıkı dolguya eşlenir. */
+:root[data-density="compact"] [data-card-cover] { margin: -0.5rem -0.625rem 0.5rem; width: calc(100% + 1.25rem); }
+:root[data-density="compact"] [data-card-list] > :not([hidden]) ~ :not([hidden]) { margin-top: 0.375rem; }
+:root[data-density="compact"] [data-tree-row] { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+:root[data-density="compact"] [data-tree-item] { margin-top: 0; margin-bottom: 0; }
+
+/* ── Yumuşak kabuk (beta, #1aae9955) ────────────────────────────────────────
+   Kullanıcının tarifi ve ekteki MS Teams görseli: şerit, üst çubuk ve panel
+   **aynı** koyu gride buluşur; pano/liste ise köşeleri yuvarlak, gölgeli, tam
+   beyaz (koyu temada tam siyah) bir yaprağın içinde açılır. Bayrak
+   `<html data-shell="soft">` (localStorage, useShell.ts); varsayılan kapalı.
+   Yalnız kabuk tokenları ve yaprak kuralları değişir — `--c-app` dokunulmaz,
+   çünkü onu tam ekran görev penceresi, giriş ekranı ve çekmece de kullanıyor. */
+/* Ton dengesi (kullanıcı, 28 Eyl: "bembeyaz ve simsiyah çok baskın"): her iki
+   temada da **ana panel daha açık, şerit ve panel daha koyu** — fark kontrastla
+   değil tonla kuruluyor. Kartlar (`--c-surface`) yine yaprağın bir adım
+   üstünde durur. */
+:root[data-shell="soft"] {
+  --c-nav: 226 231 238;      /* şerit + üst çubuk + panel: tek gri, daha koyu */
+  --c-panel: 226 231 238;
+  --c-content: 250 251 253;  /* yaprak: kırık beyaz */
+}
+:root[data-shell="soft"].dark {
+  --c-nav: 10 13 19;         /* koyu temada en koyu yüzey kabuk */
+  --c-panel: 10 13 19;
+  --c-content: 18 22 31;     /* yaprak kabuktan bir ton açık */
+}
+/* Yaprağın çevresindeki oluk kabuk grisidir; yaprak onun içinde yüzer. */
+:root[data-shell="soft"] [data-shell-gutter] { background-color: rgb(var(--c-nav)); }
+:root[data-shell="soft"] [data-shell-sheet] {
+  background-color: rgb(var(--c-content));
+  border-radius: 0.75rem;
+  /* Üstte ve panel tarafında boşluk yok (kullanıcı, 28 Eyl): yaprak üst
+     çubuğa ve sürükleme çizgisine yaslanır, yalnız sağda ve altta yüzer. */
+  margin: 0 0.5rem 0.5rem 0;
+  box-shadow: var(--shadow-lg);
+}
+/* Siyah yaprakta gölge okunmaz; ayrımı ince bir çizgi yapar. */
+:root[data-shell="soft"].dark [data-shell-sheet] { box-shadow: 0 0 0 1px rgb(var(--c-line) / 0.55); }
+/* Üst çubukla oluk aynı renk: aradaki çizgi gereksiz bir dikiş izi bırakıyor. */
+:root[data-shell="soft"] [data-topbar] { border-bottom-color: transparent; }
+/* Bağlam çubuğu yaprağın parçasıdır; kendi zeminini değil yaprağınkini alsın
+   (koyu temada `bg-surface` siyah yaprağın üstünde açık bir bant gibi duruyordu). */
+:root[data-shell="soft"] [data-context-bar] { background-color: transparent; }
+/* Liste zaten kendi kartında duruyordu; yaprağın içinde ikinci bir çerçeve
+   olmasın diye düzleşir — satırlar doğrudan yaprağın üstünde. Yapışkan ad
+   sütunu opak olmak zorunda, o da yaprağın rengini alır. */
+:root[data-shell="soft"] [data-list-scroller] {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  /* Köşe yuvarlaklığı kalkar: yapışkan başlık satırı kırpılınca üstü
+     yuvarlak bir bant gibi duruyordu (kullanıcı, 28 Eyl). */
+  border-radius: 0;
+}
+:root[data-shell="soft"] .list-name-cell { background-color: rgb(var(--c-content)); }
+/* Kabuğun içindeki yatay ayraçlar kalkar (kullanıcı, 28 Eyl): `border-line-soft`
+   klasik zeminde görünmüyordu, gri kabukta beyaz çizgi gibi ortaya çıktı. */
+:root[data-shell="soft"] [data-chrome-sep] { border-color: transparent; }
+/* Ağaçtaki dikey seviye çizgileri kalır ama zeminden biraz koyu olur — aynı
+   sebeple beyaz görünüyorlardı; seviye bilgisi taşıdıkları için silinmedi. */
+:root[data-shell="soft"] [data-tree-guide] { border-color: rgb(var(--c-fg-faint) / 0.28); }
+/* Telefonda yaprak ekranı doldurur: oluk da yuvarlak köşe de yer kaybı olur. */
+@media (max-width: 767px) {
+  :root[data-shell="soft"] [data-shell-sheet] { margin: 0; border-radius: 0; box-shadow: none; }
+}
+
 @layer base {
   * { box-sizing: border-box; }
   html {
@@ -9,22 +223,22 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-app text-fg antialiased;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
     line-height: 1.5;
   }
   button, a, [role="button"] { touch-action: manipulation; }
+  /* Brand-coloured caret: visible on both light and dark backgrounds */
+  input, textarea, [contenteditable="true"] { caret-color: #6366f1; }
   :focus-visible {
     outline: 2px solid #4f46e5;
     outline-offset: 2px;
   }
 }
 
-/* ── Dark mode ──────────────────────────────────────────────────────────────── */
-.dark body { @apply bg-gray-950 text-slate-100; }
-
+/* ── Form controls follow the theme tokens ──────────────────────────────────── */
 .dark input[type="text"],
 .dark input[type="email"],
 .dark input[type="password"],
@@ -32,14 +246,14 @@
 .dark input[type="number"],
 .dark textarea,
 .dark select {
-  background-color: #1f2937;
-  border-color: #374151;
-  color: #f9fafb;
+  background-color: rgb(var(--c-field));
+  border-color: rgb(var(--c-line));
+  color: rgb(var(--c-fg));
   color-scheme: dark;
 }
-.dark input::placeholder,
-.dark textarea::placeholder { color: #6b7280; }
-.dark [contenteditable] { color: #f9fafb; }
+input::placeholder,
+textarea::placeholder { color: rgb(var(--c-fg-faint)); }
+.dark [contenteditable] { color: rgb(var(--c-fg)); }
 
 [contenteditable][data-empty="true"]::before {
   content: attr(data-placeholder);
@@ -50,85 +264,513 @@
 }
 .dark [contenteditable][data-empty="true"]::before { color: #6b7280; }
 
-/* ── TipTap ─────────────────────────────────────────────────────────────────── */
+/* ── Rich text (TipTap editor + read-only markdown view share these) ─────────── */
 .tiptap-editor .ProseMirror {
-  padding: 10px 12px;
+  padding: 12px 14px;
   min-height: inherit;
   outline: none;
+}
+/* Frameless editor (pages): text lines up with the title above it. */
+.tiptap-bare .ProseMirror { padding: 4px 0; }
+
+/* @mention chip (#3461B7F0): in the editor, in read-only comments and in markdown views. */
+.ProseMirror .mention, .md-view .mention {
+  display: inline; padding: 0 0.3em; border-radius: var(--radius-md); font-weight: 600; white-space: nowrap;
+  color: theme('colors.primary.700'); background: theme('colors.primary.100');
+}
+.dark .ProseMirror .mention, .dark .md-view .mention { color: theme('colors.primary.300'); background: theme('colors.primary.900 / 45%'); }
+.tiptap-editor .ProseMirror,
+.md-view {
   font-size: 0.9375rem;
   line-height: 1.7;
   color: #0f172a;
+  word-break: break-word;
 }
-.dark .tiptap-editor .ProseMirror { color: #f1f5f9; }
+.dark .tiptap-editor .ProseMirror,
+.dark .md-view { color: #f1f5f9; }
 
-.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+/* Markdown inside a comment bubble: same rules, one size down. */
+.comment-md .md-view { font-size: 0.875rem; line-height: 1.6; }
+.comment-md .md-view :is(h1,h2,h3) { font-size: 1rem; margin-top: 0.4em; }
+.comment-md .md-view img { max-height: 320px; width: auto; }
+
+/* Placeholder (per-node, ClickUp-style) */
+.tiptap-editor .ProseMirror .is-empty[data-placeholder]:not([data-placeholder=""])::before {
   content: attr(data-placeholder);
   color: #94a3b8;
   pointer-events: none;
   float: left;
   height: 0;
 }
-.dark .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before { color: #6b7280; }
+.dark .tiptap-editor .ProseMirror .is-empty[data-placeholder]:not([data-placeholder=""])::before { color: #6b7280; }
 
-.tiptap-editor .ProseMirror strong { font-weight: 600; }
-.tiptap-editor .ProseMirror em { font-style: italic; }
-.tiptap-editor .ProseMirror s { text-decoration: line-through; }
+/* Blocks */
+.tiptap-editor .ProseMirror p, .md-view p { margin: 0 0 0.5em; }
+.tiptap-editor .ProseMirror > :last-child, .md-view > :last-child { margin-bottom: 0; }
 
-.tiptap-editor .ProseMirror code {
-  background: #f1f5f9;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-family: ui-monospace, monospace;
-  font-size: 0.8em;
-  color: #4f46e5;
+.tiptap-editor .ProseMirror h1, .md-view h1,
+.tiptap-editor .ProseMirror h2, .md-view h2,
+.tiptap-editor .ProseMirror h3, .md-view h3 {
+  font-weight: 700; line-height: 1.3; letter-spacing: -0.01em;
+  margin: 1.1em 0 0.4em; color: #0f172a;
 }
-.dark .tiptap-editor .ProseMirror code { background: #1e293b; color: #a5b4fc; }
+.dark .tiptap-editor .ProseMirror :is(h1,h2,h3), .dark .md-view :is(h1,h2,h3) { color: #f8fafc; }
+.tiptap-editor .ProseMirror h1, .md-view h1 { font-size: 1.5rem; }
+.tiptap-editor .ProseMirror h2, .md-view h2 { font-size: 1.25rem; }
+.tiptap-editor .ProseMirror h3, .md-view h3 { font-size: 1.0625rem; }
+.tiptap-editor .ProseMirror :is(h1,h2,h3):first-child, .md-view :is(h1,h2,h3):first-child { margin-top: 0; }
 
-.tiptap-editor .ProseMirror pre {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 14px;
-  overflow-x: auto;
-  font-family: ui-monospace, monospace;
-  font-size: 0.825em;
-  border: 1px solid #e2e8f0;
+.tiptap-editor .ProseMirror strong, .md-view strong { font-weight: 600; }
+.tiptap-editor .ProseMirror em, .md-view em { font-style: italic; }
+.tiptap-editor .ProseMirror s, .md-view del, .md-view s { text-decoration: line-through; color: #64748b; }
+
+.tiptap-editor .ProseMirror a, .md-view a {
+  color: #4f46e5; text-decoration: underline; text-decoration-color: #c7d2fe; text-underline-offset: 2px;
 }
-.dark .tiptap-editor .ProseMirror pre { background: #1e293b; border-color: #334155; }
+.tiptap-editor .ProseMirror a:hover, .md-view a:hover { text-decoration-color: currentColor; }
+.dark .tiptap-editor .ProseMirror a, .dark .md-view a { color: #a5b4fc; text-decoration-color: #4338ca; }
 
-.tiptap-editor .ProseMirror ul { list-style-type: disc; padding-left: 1.25rem; }
-.tiptap-editor .ProseMirror ol { list-style-type: decimal; padding-left: 1.25rem; }
-.tiptap-editor .ProseMirror li { margin: 2px 0; }
+.tiptap-editor .ProseMirror code, .md-view code {
+  background: rgb(var(--c-raised)); border-radius: var(--radius-md); padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: #4f46e5;
+}
+.dark .tiptap-editor .ProseMirror code, .dark .md-view code { background: rgb(var(--c-field)); color: #a5b4fc; }
 
-.tiptap-editor .ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+/* Kod kutusunun renkleri temadan (#58789618, 29 Eyl — "temaya uymuyor"): açık
+   temada paletin açık gri yüzeyi, koyu temada paletin en koyu tonu (şerit);
+   kum/grafit/gece paletlerinde kutu da o tonu alır. Sözdizimi renkleri iki zemin
+   için ayrı: açıkta -700 tonları (açık gri zeminde en az 4.5:1), koyuda pastel.
+   Hepsi `--code-*` değişkenlerinde; kod kutusuna yeni renk yazarken bunları kullan. */
+.fira-code, .tiptap-editor .ProseMirror pre, .md-view pre {
+  --code-bg: rgb(var(--c-raised));
+  --code-fg: rgb(var(--c-fg));
+  --code-muted: rgb(var(--c-fg-muted));
+  --code-faint: rgb(var(--c-fg-faint));
+  --code-comment: rgb(var(--c-fg-muted));
+  --code-border: rgb(var(--c-line));
+  --code-bar: rgb(var(--c-fg) / 4%);
+  --code-hover: rgb(var(--c-fg) / 8%);
+  --code-kw: #7c3aed; --code-str: #15803d; --code-num: #c2410c;
+  --code-title: #0369a1; --code-type: #0e7490; --code-attr: #b91c1c;
+}
+.dark .fira-code, .dark .tiptap-editor .ProseMirror pre, .dark .md-view pre {
+  --code-bg: rgb(var(--c-nav));
+  --code-comment: rgb(var(--c-fg-faint));
+  --code-bar: rgb(var(--c-fg) / 5%);
+  --code-kw: #c4b5fd; --code-str: #86efac; --code-num: #fdba74;
+  --code-title: #7dd3fc; --code-type: #67e8f9; --code-attr: #fca5a5;
+}
+/* Yüksek kontrast paletinin açık zemini daha koyu: bir ton koyu renkler. */
+:root[data-palette="contrast"]:not(.dark) .fira-code {
+  --code-kw: #5b21b6; --code-str: #166534; --code-num: #9a3412;
+  --code-title: #075985; --code-type: #155e75; --code-attr: #991b1b;
+}
+
+.tiptap-editor .ProseMirror pre, .md-view pre {
+  background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--code-border);
+  border-radius: var(--radius-xl); padding: 14px 16px; margin: 0.6em 0;
+  overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; line-height: 1.6;
+}
+/* Koyu temadaki satır içi kod kuralı (.dark … code, 0,3,1) bu sıfırlamayı (0,2,2)
+   eziyordu: kod bloğundaki metin mavi, arkası açık bir bant olarak çıkıyordu. */
+.tiptap-editor .ProseMirror pre code, .md-view pre code,
+.dark .tiptap-editor .ProseMirror pre code, .dark .md-view pre code { background: none; color: inherit; padding: 0; border-radius: 0; font-size: inherit; }
+
+/* ── Kod bloğu (#58789618) ─────────────────────────────────────────────────
+   Üstte dil seçimi + satır sayısı + kopyala; kod sarılmaz, yatay kayar; uzun
+   blok kendi içinde kalır (okurken "Devamını göster" ile açılır). */
+.fira-code {
+  margin: 0.6em 0; border-radius: var(--radius-xl); overflow: hidden;
+  background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--code-border);
+}
+.fira-code-bar {
+  /* Çubuk arayüzdür, içerik değil: kopyalanan metne "js 2 satır Kopyala" karışmasın (#55bed0f7). */
+  user-select: none; -webkit-user-select: none;
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px 5px 10px;
+  background: var(--code-bar); border-bottom: 1px solid var(--code-border); color: var(--code-muted); font-size: 0.75rem;
+}
+.fira-code-lang, .fira-code-lang-label {
+  display: inline-flex; align-items: center; gap: 4px; background: transparent; color: var(--code-fg);
+  border: 1px solid var(--code-border); border-radius: var(--radius-md); padding: 1px 6px; font-size: 0.75rem; font-family: inherit; line-height: 1.5;
+}
+.fira-code-lang { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.fira-code-lang:hover, .fira-code-lang[aria-expanded="true"] { background: var(--code-hover); }
+.fira-code-lang svg { width: 12px; height: 12px; flex: none; color: var(--code-faint); }
+.fira-code-lines { color: var(--code-faint); }
+.fira-code-copy, .fira-code-more {
+  margin-left: auto; cursor: pointer; color: var(--code-muted); background: transparent;
+  border: 1px solid var(--code-border); border-radius: var(--radius-md); padding: 1px 8px; font-size: 0.75rem;
+}
+.fira-code-copy:hover, .fira-code-more:hover { background: var(--code-hover); color: var(--code-fg); }
+.fira-code-copy.is-done { color: rgb(var(--c-success)); border-color: rgb(var(--c-success) / 45%); }
+.fira-code-more { display: block; width: 100%; margin: 0; border: 0; border-top: 1px solid var(--code-border); border-radius: 0; padding: 6px; text-align: center; }
+/* Düzenleyicideki `.tiptap-editor .ProseMirror pre` (0,2,1) kutunun içinde ikinci
+   bir kenarlık/boşluk çizmesin: aynı kural daha özgül seçiciyle. */
+.fira-code pre, .tiptap-editor .ProseMirror .fira-code pre { margin: 0; border: 0; border-radius: 0; background: transparent; }
+
+/* Dil seçicinin listesi (29 Eyl): tarayıcının yerleşik <select> listesi koyu
+   temada okunmuyordu. Liste gövdeye taşınır (kod kutusunun overflow'u kesmesin),
+   tam ekran editörün (z 9000) üstünde durur; renkleri uygulamanın menüleri gibi. */
+.fira-code-menu {
+  position: fixed; z-index: 9500; display: flex; flex-direction: column;
+  min-width: 190px; max-width: 260px; padding: 4px; font-size: 0.8125rem;
+  background: rgb(var(--c-surface)); color: rgb(var(--c-fg));
+  border: 1px solid rgb(var(--c-line)); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+.fira-code-menu-q {
+  padding: 5px 8px 7px; margin-bottom: 4px; font-size: 0.75rem; color: rgb(var(--c-fg));
+  border-bottom: 1px solid rgb(var(--c-line-soft)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fira-code-menu-q.is-empty { color: rgb(var(--c-fg-faint)); }
+.fira-code-menu-list {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgb(var(--c-line)) transparent;
+}
+.fira-code-opt {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px;
+  cursor: pointer; color: rgb(var(--c-fg-2)); user-select: none; -webkit-user-select: none;
+}
+.fira-code-opt.is-active { background: rgb(var(--c-raised)); color: rgb(var(--c-fg)); }
+.fira-code-opt[aria-selected="true"] { color: rgb(var(--c-fg)); font-weight: 600; }
+.fira-code-opt svg { width: 14px; height: 14px; flex: none; visibility: hidden; color: theme('colors.primary.600'); }
+.dark .fira-code-opt svg { color: theme('colors.primary.300'); }
+.fira-code-opt[aria-selected="true"] svg { visibility: visible; }
+.fira-code-menu-none { padding: 6px 8px; font-size: 0.75rem; color: rgb(var(--c-fg-faint)); }
+/* Satırlar kaydırılmaz: uzun satır alta taşmaz, blok yatay kayar. */
+.tiptap-editor .ProseMirror pre, .md-view .fira-code pre { white-space: pre; }
+.fira-code pre.is-tall { max-height: 32em; overflow: auto; }
+.fira-code pre.is-clipped { max-height: 22em; overflow: hidden; }
+
+/* ── Yüklü pencerede başlık çubuğu (#0DD02686) ─────────────────────────────
+   `display_override: window-controls-overlay` açıkken işletim sisteminin ayrı
+   başlık çubuğu kalkıyor; o satırı uygulamanın üst çubuğu dolduruyor. Ölçüler
+   tarayıcıdan geliyor: `titlebar-area-x/width/height` pencere düğmelerinin
+   kapladığı yeri dışarıda bırakır. Kaplama yoksa bu blok hiç devreye girmez. */
+html[data-wco] header[data-topbar] {
+  /* Şerit Windows'ta ~33 px: çubuğu ona sıkıştırınca arama kutusu ve profil
+     düğmesi (36 px) eziliyordu (kullanıcı raporu, 24 Eyl). Çubuk kendi
+     yüksekliğinde kalır, yalnız üstteki şerit sürüklenebilir; şerit daha
+     uzunsa (başka işletim sistemi) çubuk ona uyar. Teams'in yaptığı da bu. */
+  min-height: max(3rem, env(titlebar-area-height, 3rem));
+  padding-left: calc(env(titlebar-area-x, 0px) + 0.5rem);
+  /* Sağda pencere düğmelerine yer: pencere genişliği − çubuğun bittiği yer. */
+  padding-right: calc(100vw - env(titlebar-area-width, 100vw) - env(titlebar-area-x, 0px) + 0.75rem);
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+/* Çubuktaki her kontrol tıklanabilir kalmalı: sürükleme yalnız boşlukta.
+   Çubuğun içinden açılan katmanlar (komut paleti sonuçları, profil menüsü) da
+   listede: sürükleme bölgesi kalan bir sonuca **çift tıklamak** pencereyi
+   büyütüp küçültüyordu, seçilen satır açılmıyordu (#849dd4b8). */
+html[data-wco] header[data-topbar] :is(button, a, input, select, [role="button"], [role="combobox"], [tabindex],
+  [role="listbox"], [role="option"], [role="menu"], [role="menuitem"], [role="dialog"], [data-palette-list]) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Üst çubuğu olmayan ekranlar (giriş, gelen kutusu sayfası): içerik pencere
+   düğmelerinin altına girmesin. */
+html[data-wco] [data-wco-pad] { padding-top: env(titlebar-area-height, 0px); }
+/* Görev penceresi açıkken de başlık çubuğu kullanılabilir kalsın: örtü çubuğun
+   altından başlar (ölçü üstteki `min-height` ile aynı), yoksa pencere hiçbir
+   yerinden sürüklenemiyor ve çubuk yarı karanlık duruyordu. */
+html[data-wco] [data-modal-backdrop] { top: max(3rem, env(titlebar-area-height, 3rem)); }
+/* Tam ekran görev görünümü de üst çubuğun altından başlar (aynı ölçü). */
+html[data-wco] [data-ticket-full] { top: max(3rem, env(titlebar-area-height, 3rem)); }
+/* Pencerenin tamamını kaplayan katmanların üst satırı (tam ekran editör, dosya
+   önizlemesi): üst çubuğun yerine geçtikleri için pencere düğmeleri onların
+   sağında durur. Düğmelerin altına düşen "Okuma sütunu", kapat ve indir
+   tıklanamıyordu (#7c54fb70). Sağda düğmelere yer, satır en az şerit boyu;
+   macOS'ta düğmeler solda, orada da `titlebar-area-x` kadar içeri. */
+html[data-wco] [data-wco-bar] {
+  min-height: env(titlebar-area-height, 0px);
+  margin-left: env(titlebar-area-x, 0px);
+  padding-right: calc(100vw - env(titlebar-area-width, 100vw) - env(titlebar-area-x, 0px) + 0.75rem);
+}
+
+/* Bağlantı bandı üst çubuğun altında yer kaplıyor (#474a502d): akışta olmayan
+   `fixed` katmanlar da onun altından başlasın, yoksa bandı örtüyorlar. */
+html[data-conn-banner] [data-ticket-full] { top: calc(3rem + 1.75rem); }
+html[data-conn-banner] [data-inbox-drawer] { top: calc(3rem + 1.75rem); }
+html[data-wco][data-conn-banner] [data-ticket-full],
+html[data-wco][data-conn-banner] [data-inbox-drawer] { top: calc(max(3rem, env(titlebar-area-height, 3rem)) + 1.75rem); }
+@media (max-width: 767px) {
+  html[data-conn-banner] [data-ticket-full] { top: 1.75rem; }
+}
+
+/* ── Görsel boyutu (#58789618) ─────────────────────────────────────────────
+   Seçili görselin üstünde ölçü çubuğu, sağ alt köşesinde sürükleme tutamacı.
+   Seçim yalnız editör odaktayken çizilir: odak dışındaki seçim (içerik sonradan
+   yüklenince sona düşen seçim) görseli seçiliymiş gibi gösteriyordu. */
+.fira-img { position: relative; display: block; margin: 0.6em 0; width: fit-content; max-width: 100%; }
+.fira-img-bar {
+  position: absolute; top: 6px; left: 6px; z-index: 2; display: none; gap: 4px;
+  padding: 3px; border-radius: 8px; background: rgb(15 23 42 / 82%); backdrop-filter: blur(2px);
+}
+.ProseMirror-focused .fira-img.is-selected .fira-img-bar, .fira-img:hover .fira-img-bar { display: flex; }
+.fira-img-bar button {
+  cursor: pointer; color: #e2e8f0; background: transparent; border: 0;
+  border-radius: var(--radius-md); padding: 2px 7px; font-size: 0.75rem; line-height: 1.6;
+}
+.fira-img-bar button:hover { background: rgb(148 163 184 / 28%); color: #fff; }
+.fira-img-handle {
+  position: absolute; right: -4px; bottom: -4px; z-index: 2; display: none;
+  width: 14px; height: 14px; border-radius: var(--radius-md); cursor: nwse-resize; touch-action: none;
+  background: theme('colors.primary.500'); box-shadow: 0 0 0 2px rgb(255 255 255 / 85%);
+}
+.ProseMirror-focused .fira-img.is-selected .fira-img-handle, .fira-img:hover .fira-img-handle { display: block; }
+.ProseMirror-focused .fira-img.is-selected { outline: 2px solid theme('colors.primary.500'); outline-offset: 2px; border-radius: var(--radius-md); }
+.fira-img img, .fira-img video { display: block; max-width: 100%; height: auto; border-radius: 6px; }
+
+/* Satır numarası: ayrı ızgara sütunu, seçilemez (kopyalarken numaralar gelmesin),
+   yatay kaydırmada solda yapışık kalır. white-space'i burada açıkça ve daha özgül
+   seçiciyle veriyoruz: düzenleyicide numaralar contenteditable=false bir öğede ve
+   tiptap'ın enjekte ettiği `.ProseMirror [contenteditable="false"] { white-space:
+   normal }` kuralı (0,2,0) satır sonlarını boşluğa çevirip numaraları tek satıra
+   diziyordu (29 Eyl, "satır numaraları yanlış"). */
+.fira-code-nums { display: none; }
+.fira-code.has-lineno pre, .tiptap-editor .ProseMirror .fira-code.has-lineno pre { display: grid; grid-template-columns: max-content 1fr; padding-left: 0; }
+.fira-code.has-lineno pre > .fira-code-nums {
+  display: block; position: sticky; left: 0; z-index: 1; white-space: pre;
+  padding: 0 10px 0 14px; margin-right: 12px; border-right: 1px solid var(--code-border);
+  background: var(--code-bg); color: var(--code-faint); text-align: right;
+  user-select: none; -webkit-user-select: none;
+}
+
+/* Sözdizimi renkleri (highlight.js sınıfları) — değerler yukarıdaki `--code-*`. */
+.fira-code .hljs-keyword, .fira-code .hljs-selector-tag, .fira-code .hljs-literal, .fira-code .hljs-section { color: var(--code-kw); }
+.fira-code .hljs-string, .fira-code .hljs-attr, .fira-code .hljs-meta-string { color: var(--code-str); }
+.fira-code .hljs-number, .fira-code .hljs-symbol, .fira-code .hljs-bullet, .fira-code .hljs-quote { color: var(--code-num); }
+.fira-code .hljs-comment { color: var(--code-comment); font-style: italic; }
+.fira-code .hljs-title, .fira-code .hljs-name, .fira-code .hljs-selector-id, .fira-code .hljs-selector-class { color: var(--code-title); }
+.fira-code .hljs-type, .fira-code .hljs-built_in, .fira-code .hljs-class { color: var(--code-type); }
+.fira-code .hljs-variable, .fira-code .hljs-template-variable, .fira-code .hljs-params { color: var(--code-fg); }
+.fira-code .hljs-attribute, .fira-code .hljs-meta { color: var(--code-attr); }
+.fira-code .hljs-tag { color: var(--code-muted); }
+.fira-code .hljs-addition { color: var(--code-str); background: color-mix(in srgb, var(--code-str) 12%, transparent); }
+.fira-code .hljs-deletion { color: var(--code-attr); background: color-mix(in srgb, var(--code-attr) 12%, transparent); }
+.fira-code .hljs-emphasis { font-style: italic; }
+.fira-code .hljs-strong { font-weight: 600; }
+
+.tiptap-editor .ProseMirror blockquote, .md-view blockquote {
+  border-left: 3px solid #c7d2fe; margin: 0.6em 0; padding: 2px 0 2px 14px; color: #475569;
+}
+.dark .tiptap-editor .ProseMirror blockquote, .dark .md-view blockquote { border-color: #4338ca; color: #cbd5e1; }
+
+.tiptap-editor .ProseMirror hr, .md-view hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1em 0; }
+.dark .tiptap-editor .ProseMirror hr, .dark .md-view hr { border-color: #334155; }
+.tiptap-editor .ProseMirror hr.ProseMirror-selectednode { border-color: #6366f1; }
+
+/* Lists */
+.tiptap-editor .ProseMirror ul, .md-view ul { list-style-type: disc; padding-left: 1.4rem; margin: 0.3em 0 0.5em; }
+.tiptap-editor .ProseMirror ol, .md-view ol { list-style-type: decimal; padding-left: 1.4rem; margin: 0.3em 0 0.5em; }
+.tiptap-editor .ProseMirror li, .md-view li { margin: 2px 0; }
+.tiptap-editor .ProseMirror li p, .md-view li p { margin: 0; }
+.tiptap-editor .ProseMirror ul ul, .md-view ul ul { list-style-type: circle; }
+
+/* Task lists */
+.tiptap-editor .ProseMirror ul[data-type="taskList"], .md-view ul.contains-task-list { list-style: none; padding-left: 0.1rem; }
 .tiptap-editor .ProseMirror ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label { flex-shrink: 0; margin-top: 3px; cursor: pointer; }
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
-  accent-color: #4f46e5; width: 14px; height: 14px; cursor: pointer;
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > label { flex-shrink: 0; margin-top: 4px; cursor: pointer; }
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.tiptap-editor .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div { text-decoration: line-through; color: rgb(var(--c-fg-faint)); }
+.tiptap-editor .ProseMirror input[type="checkbox"], .md-view input[type="checkbox"] {
+  accent-color: #4f46e5; width: 14px; height: 14px; cursor: pointer; vertical-align: -2px; margin-right: 6px;
 }
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li > div { flex: 1; }
-.tiptap-editor .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
-  text-decoration: line-through; color: #94a3b8;
+.md-view li.task-list-item { list-style: none; margin-left: -0.2rem; }
+.md-view li.task-list-item:has(input:checked) { text-decoration: line-through; color: #94a3b8; }
+
+/* Images */
+.tiptap-editor .ProseMirror img, .md-view img {
+  max-height: 360px; max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0;
+  margin: 6px 0; display: block; object-fit: contain; cursor: zoom-in;
+}
+.dark .tiptap-editor .ProseMirror img, .dark .md-view img { border-color: #374151; }
+.tiptap-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #6366f1; outline-offset: 2px; }
+/* A file going up, where it was pasted (#FB541A31): chip with a progress ring. */
+.fira-upload-ph {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; vertical-align: middle;
+  margin: 2px 2px; padding: 3px 8px 3px 5px; border-radius: 999px; font-size: 0.75rem; line-height: 1.4;
+  background: #f1f5f9; border: 1px dashed #cbd5e1; color: #475569; user-select: none;
+}
+/* The empty-editor hint would sit under the chip: hide it while a file goes up. */
+.tiptap-editor .ProseMirror:has(.fira-upload-ph) .is-empty[data-placeholder]::before { content: none; }
+.fira-upload-ph .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 16rem; }
+.fira-upload-ph .pct { font-variant-numeric: tabular-nums; color: #64748b; }
+.fira-upload-ph .ring-bg { stroke: #cbd5e1; }
+.fira-upload-ph .ring { stroke: #6366f1; transition: stroke-dashoffset 0.2s; }
+.dark .fira-upload-ph { background: #1f2937; border-color: #4b5563; color: #d1d5db; }
+.dark .fira-upload-ph .pct { color: #9ca3af; }
+.dark .fira-upload-ph .ring-bg { stroke: #4b5563; }
+
+/* Pasted videos play in place (#FB541A31). */
+.tiptap-editor .ProseMirror video.fira-video, .md-view video.fira-video {
+  display: block; max-width: 100%; max-height: 480px; border-radius: 0.5rem; background: #000; margin: 0.5em 0;
+}
+.tiptap-editor .ProseMirror video.ProseMirror-selectednode { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+/* Tables
+   Sütunlar içeriğe göre (#58789618): `table-layout: fixed` her sütuna eşit
+   genişlik veriyordu, "Evet/Hayır" sütunu uzun açıklama kadar yer kaplıyordu.
+   Artık tarayıcı içeriğe bakar; tablo dar kalırsa satırı doldurur, geniş
+   olursa kendi kutusunda yatay kayar (`.md-view` zaten kayıyor). Elle
+   genişlik verilmiş tablolar aşağıdaki `[data-width]` kuralıyla aynen kalır. */
+.tiptap-editor .ProseMirror table, .md-view table {
+  border-collapse: collapse; min-width: 100%; width: auto; max-width: 100%;
+  margin: 0.6em 0; font-size: 0.9em; table-layout: auto; overflow: hidden;
+}
+/* Sütun genişliği elle ayarlanmışsa (ProseMirror `colwidth`) sabit düzen şart:
+   yoksa tarayıcı verilen genişlikleri içeriğe göre yeniden dağıtır. */
+.tiptap-editor .ProseMirror table:has(col[style*="width"]) { table-layout: fixed; width: 100%; }
+.tiptap-editor .ProseMirror :is(th,td), .md-view :is(th,td) {
+  border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; vertical-align: top;
+  min-width: 60px; max-width: 46ch; position: relative; overflow-wrap: anywhere;
+}
+/* Okurken uzun tabloda başlık satırı yukarıda kalsın. */
+.md-view thead th { position: sticky; top: 0; z-index: 1; }
+.md-view tbody tr:nth-child(even) { background: rgb(15 23 42 / 3%); }
+.dark .md-view tbody tr:nth-child(even) { background: rgb(148 163 184 / 8%); }
+.dark .tiptap-editor .ProseMirror :is(th,td), .dark .md-view :is(th,td) { border-color: #334155; }
+.tiptap-editor .ProseMirror th, .md-view th { background: #f8fafc; font-weight: 600; }
+.dark .tiptap-editor .ProseMirror th, .dark .md-view th { background: #1e293b; }
+.tiptap-editor .ProseMirror :is(th,td) p { margin: 0; }
+.tiptap-editor .ProseMirror .selectedCell::after {
+  content: ''; position: absolute; inset: 0; background: rgba(99, 102, 241, 0.12); pointer-events: none;
+}
+.md-view { overflow-x: auto; }
+
+/* A table with its own width (#1E605419): it keeps that width and scrolls
+   sideways inside its own box, so the text around it is never stretched. */
+.tiptap-editor .ProseMirror .tableWrapper { overflow-x: auto; max-width: 100%; }
+/* No wrapper element in this build, so the text area itself scrolls — only when
+   it actually holds a table that was given a width. */
+.tiptap-editor .ProseMirror:has(table[data-width]) { overflow-x: auto; }
+.tiptap-editor .ProseMirror table[data-width], .md-view table[data-width] {
+  width: var(--table-w); min-width: var(--table-w); max-width: none; table-layout: auto;
 }
 
-.tiptap-editor .ProseMirror img {
-  max-height: 320px; max-width: 100%; border-radius: 8px;
-  border: 1px solid #e2e8f0; margin: 6px 0; display: block;
-  object-fit: contain; cursor: zoom-in;
+/* Drop cursor / gap cursor */
+.tiptap-editor .ProseMirror-gapcursor:after { border-top: 1px solid #6366f1; }
+
+/* ── Dynamic-colour chips (status / tag / priority) ─────────────────────────
+   The colour comes from the data (--c). Light: tinted bg + the colour as text.
+   Dark: the same colour is too dim as text, so mix it towards white. */
+.chip-dyn {
+  /* Metin rengin kendisi değil, koyulaştırılmışı: açık tonlu etiketlerde (amber,
+     sarı, yeşil) ham renk kendi açık zemininde 1.9–3.9:1 kalıyordu (#990dfec5). */
+  color: color-mix(in srgb, var(--c) 60%, black);
+  background-color: color-mix(in srgb, var(--c) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c) 32%, transparent);
 }
-.dark .tiptap-editor .ProseMirror img { border-color: #374151; }
-.tiptap-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #4f46e5; outline-offset: 2px; }
-.tiptap-editor .ProseMirror p { margin: 0 0 6px; }
-.tiptap-editor .ProseMirror p:last-child { margin-bottom: 0; }
+.dark .chip-dyn {
+  color: color-mix(in srgb, var(--c) 55%, white);
+  background-color: color-mix(in srgb, var(--c) 24%, transparent);
+  border-color: color-mix(in srgb, var(--c) 50%, transparent);
+}
+.chip-dyn-solid { color: #fff; background-color: var(--c); border-color: var(--c); }
+/* New list (TL-13): the sticky name cell stays opaque over the columns scrolling under it —
+   the row tint is layered as an image over the surface colour instead of replacing it. */
+.list-name-cell { background-color: rgb(var(--c-surface)); background-image: linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)); }
+.group\/row:hover .list-name-cell, .group\/row:focus-visible .list-name-cell { --row-tint: theme('colors.primary.50 / 40%'); }
+tr[aria-selected="true"] .list-name-cell { --row-tint: theme('colors.primary.50 / 70%'); }
+tr[data-drop="nest"] .list-name-cell { --row-tint: theme('colors.primary.100 / 60%'); }
+.dark .group\/row:hover .list-name-cell, .dark .group\/row:focus-visible .list-name-cell { --row-tint: theme('colors.primary.950 / 15%'); }
+.dark tr[aria-selected="true"] .list-name-cell { --row-tint: theme('colors.primary.950 / 30%'); }
+.dark tr[data-drop="nest"] .list-name-cell { --row-tint: theme('colors.primary.900 / 30%'); }
+/* Satır vurgusu (#83a09637): odak halkası ve sürükleme çizgisi `tr` üzerinde
+   çizilince akışkan ad sütunu (yapışkan + opak, kendi yığın bağlamı) onları
+   örtüyordu — geniş listede satırın yalnız solundaki seçim sütununda bir parça
+   görünüyordu. Halka artık hücrelere inset gölge olarak çizilir: yer kaplamaz
+   (satır yüksekliği aynı kalır) ve yapışkan hücre de kendi payını çizdiği için
+   satır boyunca kesintisiz durur. Yeni bir satır gölgesi eklerken `--row-ring`
+   değişkenini yaz, `td`ye doğrudan `box-shadow` verme (biri diğerini siler). */
+[data-list-view] tbody tr > td { box-shadow: var(--row-ring, 0 0 #0000); }
+[data-list-view] tbody tr:focus-visible > td { --row-ring: inset 0 2px 0 0 #4f46e5, inset 0 -2px 0 0 #4f46e5; }
+[data-list-view] tbody tr:focus-visible > td:first-child { --row-ring: inset 0 2px 0 0 #4f46e5, inset 0 -2px 0 0 #4f46e5, inset 2px 0 0 0 #4f46e5; }
+[data-list-view] tbody tr:focus-visible > td:last-child { --row-ring: inset 0 2px 0 0 #4f46e5, inset 0 -2px 0 0 #4f46e5, inset -2px 0 0 0 #4f46e5; }
+[data-list-view] tbody tr[data-drop="before"] > td { --row-ring: inset 0 2px 0 0 theme('colors.primary.500'); }
+[data-list-view] tbody tr[data-drop="after"] > td { --row-ring: inset 0 -2px 0 0 theme('colors.primary.500'); }
+[data-list-view] tbody tr[data-drop="nest"] > td:first-child { --row-ring: inset 3px 0 0 0 theme('colors.primary.500'); }
+[data-list-scroller][data-scrolled-x] .list-name-cell { box-shadow: var(--row-ring, 0 0 #0000), 6px 0 8px -6px rgb(0 0 0 / 0.18); }
+[data-list-scroller][data-scrolled-x] th[data-col="name"] { box-shadow: 6px 0 8px -6px rgb(0 0 0 / 0.18); }
+.chip-dot { background-color: currentColor; }
+/* List/folder avatar tinted by a palette colour */
+.list-avatar-dyn { color: var(--c); background-color: color-mix(in srgb, var(--c) 16%, transparent); }
+.dark .list-avatar-dyn { color: color-mix(in srgb, var(--c) 60%, white); background-color: color-mix(in srgb, var(--c) 26%, transparent); }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+/* Native scrollbars (and form controls) follow the theme everywhere, not only
+   on elements that opted into .scrollbar-thin. */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
   }
+  .dark .scrollbar-thin { scrollbar-color: #374151 transparent; }
   .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
   .dark .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
+  /* Still scrollable (wheel, swipe, focus), just no visible bar. */
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
+/* ── Sayfa içi blok bağlantıları (#d46f6d70) ────────────────────────────────
+   Her üst seviye bloğun solunda, yalnız üzerine gelince beliren bir zincir
+   düğmesi: o paragrafa/başlığa giden adresi kopyalar. Bağlantıyla gelindiğinde
+   blok kısa bir vurguyla işaretlenir. */
+.md-view[data-anchors] .fira-anchored { position: relative; }
+.md-view[data-anchors] .fira-anchor {
+  position: absolute; left: -1.5rem; top: 0.15em; width: 1.25rem; height: 1.25rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 0.375rem; color: rgb(var(--c-fg-faint)); opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+.md-view[data-anchors] .fira-anchored:hover .fira-anchor,
+.md-view[data-anchors] .fira-anchor:focus-visible { opacity: 1; }
+.md-view[data-anchors] .fira-anchor:hover { color: rgb(var(--c-primary-600, 79 70 229)); background: rgb(var(--c-raised)); }
+@media (max-width: 768px) { .md-view[data-anchors] .fira-anchor { display: none; } }
+/* Blok vurgusu bloğun üstünde ayrı bir katman (#d46f6d70): editörde DOM'u
+   ProseMirror yönetiyor ve bloğa eklenen sınıf ilk yeniden çizimde siliniyor.
+   Katman metni örtmez — iç gölge saydam bir ton, dış gölge halka. */
+.fira-block-mark {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  border-radius: 0.375rem;
+  animation: fira-block-mark 2.2s ease-out;
+}
+@keyframes fira-block-mark {
+  0%, 35% { box-shadow: 0 0 0 2px theme('colors.primary.300'), inset 0 0 0 100vmax rgb(99 102 241 / 0.16); }
+  100% { box-shadow: 0 0 0 2px transparent, inset 0 0 0 100vmax transparent; }
+}
+
+
+/* Ağaçta "burada duruyor" vurgusu (#58fab188): konum satırından gelen satır,
+   kaydırma bittikten sonra da bir süre görünür kalsın diye yavaş sönüyor. */
+.fira-row-flash { animation: fira-row-flash 2.4s ease-out; border-radius: 0.5rem; }
+@keyframes fira-row-flash {
+  0%, 40% { background-color: theme('colors.primary.100'); box-shadow: 0 0 0 2px theme('colors.primary.300'); }
+  100% { background-color: transparent; box-shadow: 0 0 0 2px transparent; }
+}
+.dark .fira-row-flash { animation-name: fira-row-flash-dark; }
+@keyframes fira-row-flash-dark {
+  0%, 40% { background-color: theme('colors.primary.950'); box-shadow: 0 0 0 2px theme('colors.primary.500'); }
+  100% { background-color: transparent; box-shadow: 0 0 0 2px transparent; }
+}
+
+/* Dosyalar panelinden bir belge sürüklenirken "buraya bırakabilirsin" (#489eda17).
+   Kesikli çerçeve yer kaplamaz (outline), böylece metin kaymaz; ton uygulamanın
+   diğer bırakma hedefleriyle aynı primary ailesinden. */
+[data-file-drop] {
+  outline: 2px dashed theme('colors.primary.300');
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+  background-color: rgb(99 102 241 / 0.04);
+}
+.dark [data-file-drop] { outline-color: theme('colors.primary.500'); background-color: rgb(99 102 241 / 0.08); }

@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Icon } from '../ui/Icon'
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag, useAssignTag, useUnassignTag } from '../../hooks/useTags'
 import type { Tag } from '../../types'
 
-const PRESET_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#6b7280']
+import { TeamHexPicker } from '../ui/ColorPalettePicker'
+import { useProjectRole } from '../../hooks/useTeams'
+import { useT } from '../../i18n'
+
+// Tag colours come from the team palette, like statuses and lists.
+const DEFAULT_TAG_HEX = '#3b82f6'
 
 interface Props {
   ticketId: string
@@ -12,7 +17,7 @@ interface Props {
 }
 
 export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
-  const { t } = useTranslation()
+  const t = useT()
   const { data: allTags } = useTags(projectId)
   const createTag = useCreateTag()
   const updateTag = useUpdateTag()
@@ -22,13 +27,14 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
 
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newColor, setNewColor] = useState('#3b82f6')
+  const [newColor, setNewColor] = useState(DEFAULT_TAG_HEX)
+  const { teamId, perms } = useProjectRole(projectId)
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
 
-  const assignedIds = new Set(assignedTags.map((t) => t.id))
+  const assignedIds = new Set(assignedTags.map((tag) => tag.id))
 
   const toggle = async (tag: Tag) => {
     if (assignedIds.has(tag.id)) {
@@ -68,8 +74,8 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
         {assignedTags.map((tag) => (
           <span
             key={tag.id}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer"
-            style={{ backgroundColor: tag.color + '22', color: tag.color }}
+            className="chip-dyn border inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer"
+            style={{ '--c': tag.color } as React.CSSProperties}
             onClick={() => unassignTag.mutate({ ticketId, tagId: tag.id })}
           >
             {tag.name} <span className="opacity-60">✕</span>
@@ -77,34 +83,27 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
         ))}
         <button
           onClick={() => setOpen(!open)}
-          className="text-xs text-gray-400 hover:text-blue-500 px-1.5 py-0.5 border border-dashed border-gray-300 rounded-full hover:border-blue-400 transition-colors"
+          className="inline-flex items-center h-6 text-xs text-fg-faint hover:text-blue-500 px-2 border border-dashed border-gray-300 rounded-full hover:border-blue-400 transition-colors"
         >
-          + Tag
+          {t('ticketExtra.tag.add')}
         </button>
       </div>
 
+      {/* Kutu z-40: açıklama editörünün yapışkan araç çubuğu da z-20 ve DOM'da
+          sonra geldiği için bu kutunun üstüne biniyordu (#493652b6). */}
       {open && (
-        <div className="absolute left-0 top-7 z-20 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 w-72">
+        <div className="absolute left-0 top-7 z-40 bg-surface border border-line rounded-xl shadow-lg p-3 w-72">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">{t('tag.manage')}</p>
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs">✕</button>
+            <p className="text-xs font-semibold text-fg-2">{t('ticketExtra.tag.manage')}</p>
+            <button onClick={() => setOpen(false)} aria-label={t('common.close')} className="text-fg-faint hover:text-fg-2 text-xs">✕</button>
           </div>
 
           <div className="space-y-1 max-h-48 overflow-y-auto mb-2">
             {allTags?.map((tag) => (
-              <div key={tag.id} className="group flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg px-1.5 py-1">
+              <div key={tag.id} className="group flex items-center gap-2 hover:bg-raised rounded-lg px-1.5 py-1">
                 {editingId === tag.id ? (
                   <div className="flex-1 space-y-1">
-                    <div className="flex gap-1 flex-wrap">
-                      {PRESET_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setEditColor(c)}
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: c, outline: editColor === c ? `2px solid ${c}` : undefined, outlineOffset: 1 }}
-                        />
-                      ))}
-                    </div>
+                    <TeamHexPicker teamId={teamId} canCreate={perms.canManage} value={editColor} onChange={setEditColor} />
                     <div className="flex gap-1">
                       <input
                         autoFocus
@@ -114,17 +113,17 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                           if (e.key === 'Enter') handleSaveEdit(tag)
                           if (e.key === 'Escape') setEditingId(null)
                         }}
-                        className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
+                        className="flex-1 text-xs border border-line rounded-md px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-field text-fg"
                       />
                       <button
                         onClick={() => handleSaveEdit(tag)}
-                        className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded hover:bg-blue-700"
+                        className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-md hover:bg-blue-700"
                       >
                         ✓
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="text-xs text-gray-400 px-1 py-0.5"
+                        className="text-xs text-fg-faint px-1 py-0.5"
                       >
                         ✕
                       </button>
@@ -136,11 +135,11 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                       type="checkbox"
                       checked={assignedIds.has(tag.id)}
                       onChange={() => toggle(tag)}
-                      className="rounded flex-shrink-0"
+                      className="rounded-md flex-shrink-0"
                     />
                     <span
-                      className="flex-1 text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer"
-                      style={{ backgroundColor: tag.color + '22', color: tag.color }}
+                      className="chip-dyn border flex-1 text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer"
+                      style={{ '--c': tag.color } as React.CSSProperties}
                       onClick={() => toggle(tag)}
                     >
                       {tag.name}
@@ -149,57 +148,44 @@ export function TagSelector({ ticketId, projectId, assignedTags }: Props) {
                       <button
                         onClick={() => startEdit(tag)}
                         title={t('common.edit')}
-                        className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                        className="w-5 h-5 flex items-center justify-center rounded-md text-fg-faint hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                        <Icon name="edit" />
                       </button>
                       <button
                         onClick={() => handleDelete(tag)}
                         title={t('common.delete')}
-                        className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        className="w-5 h-5 flex items-center justify-center rounded-md text-fg-faint hover:text-danger hover:bg-danger/10 transition-colors"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Icon name="trash" />
                       </button>
                     </div>
                   </>
                 )}
               </div>
             ))}
-            {!allTags?.length && <p className="text-xs text-gray-400 dark:text-gray-500 px-1.5">{t('tag.empty')}</p>}
+            {!allTags?.length && <p className="text-xs text-fg-faint px-1.5">{t('ticketExtra.tag.empty')}</p>}
           </div>
 
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+          <div className="border-t border-line-soft pt-2">
             {creating ? (
               <div className="space-y-2">
-                <div className="flex gap-1 flex-wrap">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setNewColor(c)}
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: c, outline: newColor === c ? `2px solid ${c}` : undefined, outlineOffset: 1 }}
-                    />
-                  ))}
-                </div>
+                <TeamHexPicker teamId={teamId} canCreate={perms.canManage} value={newColor} onChange={setNewColor} />
                 <input
                   autoFocus
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false) }}
-                  placeholder={t('tag.namePlaceholder')}
-                  className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-200"
+                  placeholder={t('ticketExtra.tag.namePlaceholder')}
+                  className="w-full text-xs border border-line rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-field text-fg"
                 />
                 <div className="flex gap-2">
-                  <button onClick={handleCreate} disabled={createTag.isPending} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 flex-1">{t('tag.create')}</button>
-                  <button onClick={() => setCreating(false)} className="text-xs text-gray-400 px-2 py-1">{t('common.cancel')}</button>
+                  <button onClick={handleCreate} disabled={createTag.isPending} className="text-xs bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 flex-1">{t('ticketExtra.create')}</button>
+                  <button onClick={() => setCreating(false)} className="text-xs text-fg-faint px-2 py-1">{t('common.cancel')}</button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setCreating(true)} className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 w-full text-left">{t('tag.addNew')}</button>
+              <button onClick={() => setCreating(true)} className="text-xs text-fg-faint hover:text-fg-2 w-full text-left">{t('ticketExtra.tag.createNew')}</button>
             )}
           </div>
         </div>

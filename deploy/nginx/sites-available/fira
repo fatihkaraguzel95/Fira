@@ -1,0 +1,200 @@
+# Fira — HTTPS front (static SPA) + Supabase API under /api/
+# Kaynak: repo deploy/nginx/sites-available/fira — sunucuda /etc/nginx/sites-available/fira
+# Oran sınırlama bölgeleri: /etc/nginx/conf.d/fira-ratelimit.conf (repo deploy/nginx/conf.d/)
+server {
+    listen 80;
+    listen [::]:80;
+    server_tokens off;   # yönlendirme cevabı nginx sürümünü açık etmesin (#cae4a76b)
+    server_name fira.flpconsulting.de 172.22.111.203;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_tokens off;
+    include snippets/fira-security-headers.conf;
+    listen [::]:443 ssl http2;
+    server_name fira.flpconsulting.de 172.22.111.203;
+
+    ssl_certificate     /etc/ssl/fira/server.crt;
+    ssl_certificate_key /etc/ssl/fira/server.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:fira_ssl:5m;
+
+    # Yükleme sınırı: yalnızca storage 25 MB alır (aşağıda), geri kalanı küçük gövdeler
+    client_max_body_size 2m;
+
+    root /var/www/fira;
+    index index.html;
+
+    # Fira'ya özel JSON günlük (biçim: conf.d/fira-log.conf) — Yönetim → Ağ & İstekler bunu okur
+    access_log /var/log/nginx/fira.access.log fira_json;
+
+    # ── Supabase (Kong) — same origin, no mixed content, no CORS ──────────────
+    # Ortak proxy ayarları her alt konumda tekrar edilir (nginx location miras almaz).
+
+    # Şifreyle giriş (token?grant_type=password) — kaba kuvvete karşı dar.
+    # Aynı uç refresh_token için de kullanılır; map anahtarı boş olduğu için o sınırlanmaz.
+    location = /api/auth/v1/token {
+        limit_req zone=fira_login burst=10 nodelay;
+        limit_req zone=fira_auth  burst=100 nodelay;
+        proxy_pass http://127.0.0.1:8000/auth/v1/token;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # Kayıt / şifre sıfırlama / OTP / magic link / yeniden gönder — dar
+    location ~ ^/api/auth/v1/(signup|recover|otp|magiclink|resend|verify)$ {
+        limit_req zone=fira_signup burst=10 nodelay;
+        rewrite ^/api/(.*)$ /$1 break;   # regex location: URI'yi elle kırp, proxy_pass'e yol verilmez
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # Diğer auth uçları (user, logout, session) — geniş; uygulama bunları sık çağırır
+    location /api/auth/ {
+        limit_req zone=fira_auth burst=100 nodelay;
+        proxy_buffer_size 64k;  proxy_buffers 8 64k;  proxy_busy_buffers_size 128k;
+        proxy_pass http://127.0.0.1:8000/auth/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # PostgREST: normal kullanım geniş, kaçak döngüler kesilir
+    location /api/rest/ {
+        limit_req zone=fira_rest burst=400 nodelay;
+        proxy_buffer_size 64k;  proxy_buffers 8 64k;  proxy_busy_buffers_size 128k;
+        proxy_pass http://127.0.0.1:8000/rest/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
+    }
+
+    # Herkese açık dosyalar ve küçük resimleri (#20c4ed37): tarayıcı bir yıl saklar.
+    # Dosya adı yüklemede benzersiz üretilir (zaman damgası + rastgele; profil resminin
+    # adresi `?t=` taşır), yani aynı adresin içeriği değişmez. Storage `max-age=3600`
+    # veriyordu: kenar çubuğundaki logolar her saat yeniden isteniyor, küçük resmin her
+    # biri ~300 ms sürüyordu. Yalnız okuma buraya düşer (yükleme `/object/<kova>/…`,
+    # `public` yok); başlık yalnız başarılı cevaba eklenir (404 saklanmaz).
+    # Aynı adrese yeni içerik yazan bir yükleme yolu eklersen adrese sürüm damgası koy.
+    location ~ ^/api/storage/v1/(object/public|render/image/public)/ {
+        limit_req zone=fira_store burst=100 nodelay;
+        include snippets/fira-security-headers.conf;
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        proxy_buffer_size 64k;  proxy_buffers 8 64k;  proxy_busy_buffers_size 128k;
+        rewrite ^/api/(.*)$ /$1 break;   # regex location: URI'yi elle kırp, proxy_pass'e yol verilmez
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
+    }
+
+    # Storage: tek yerde büyük gövde
+    location /api/storage/ {
+        limit_req zone=fira_store burst=100 nodelay;
+        client_max_body_size 25m;
+        proxy_buffer_size 64k;  proxy_buffers 8 64k;  proxy_busy_buffers_size 128k;
+        proxy_pass http://127.0.0.1:8000/storage/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 300s;
+        proxy_request_buffering off;
+        proxy_buffering off;
+    }
+
+    # Realtime: WebSocket, IP başına eş zamanlı bağlantı sınırı
+    location /api/realtime/ {
+        limit_conn fira_ws 60;
+        proxy_pass http://127.0.0.1:8000/realtime/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;
+        proxy_buffering off;
+    }
+
+    # Geri kalan Supabase yolları (functions, pg-meta vb.)
+    location /api/ {
+        limit_req zone=fira_rest burst=200 nodelay;
+        proxy_buffer_size 64k;  proxy_buffers 8 64k;  proxy_busy_buffers_size 128k;
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 300s;
+        proxy_buffering off;
+    }
+
+    # Önbellek başlıkları (#cae4a76b): varlık adları içerik özetli, bir yıl ve tek
+    # Cache-Control satırı (`expires` ikinci bir satır ekliyordu); uygulama kabuğu
+    # (index.html) her açılışta doğrulanır — yoksa tarayıcı sezgisel önbellekle eski
+    # paketi açabiliyordu. SPA yolları (/list/…) try_files ile /index.html'e iç
+    # yönlendirildiği için onlar da buradan geçer.
+    location /assets/ {
+        include snippets/fira-security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+    location = /index.html {
+        include snippets/fira-security-headers.conf;
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
+    }
+
+    # PWA: service worker + manifest must always be revalidated
+    location = /sw.js {
+        include snippets/fira-security-headers.conf;
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
+    }
+    location = /manifest.webmanifest {
+        include snippets/fira-security-headers.conf;
+        add_header Cache-Control "no-cache";
+        types { application/manifest+json webmanifest; }
+        try_files $uri =404;
+    }
+    location /icons/ {
+        include snippets/fira-security-headers.conf;
+        add_header Cache-Control "public, max-age=604800";
+        try_files $uri =404;
+    }
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

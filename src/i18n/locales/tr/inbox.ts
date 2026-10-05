@@ -1,0 +1,117 @@
+/** Turkish is the source of truth for this namespace; en/de are typed against
+ *  InboxDict, so an untranslated key is a compile error. */
+export const inbox = {
+  // Inbox page chrome
+  'inbox.title': 'Gelen kutusu',
+  'inbox.backToBoard': 'Panoya dön',
+  'inbox.board': 'Pano',
+  'inbox.list': 'Liste',
+  'inbox.unreadCount': '{n} okunmamış',
+  'inbox.searchPlaceholder': 'Görev, kişi, liste ya da yorumda ara…',
+  'inbox.unreadOnly': 'Okunmamış',
+  'inbox.markVisibleRead': 'Görünenleri okundu say ({n})',
+  'inbox.markAllRead': 'Tümünü okundu say',
+  'inbox.empty': 'Henüz bildirim yok.',
+  'inbox.emptyFiltered': 'Bu süzgece uyan bildirim yok.',
+  'inbox.filter.clear': 'Filtreleri temizle',
+  'inbox.loadMore': 'Daha fazla yükle',
+  'inbox.selectHint': 'Soldan bir bildirim seç; ne değiştiğini burada göreceksin.',
+
+  'inbox.drawer.close': 'Gelen kutusunu kapat',
+  'inbox.drawer.detail': 'Ne değişti',
+  'inbox.drawer.closeDetail': 'Ayrıntıyı kapat',
+
+  // Day headings
+  'inbox.day.today': 'Bugün',
+  'inbox.day.yesterday': 'Dün',
+  'inbox.day.thisWeek': 'Bu hafta',
+  'inbox.day.thisMonth': 'Bu ay',
+  'inbox.day.older': 'Daha eski',
+
+  // Scoping the list to one ticket or one list
+  'inbox.scope.ticket': 'Görev: {name}',
+  'inbox.scope.list': 'Liste: {name}',
+  'inbox.scope.someList': 'liste',
+  'inbox.scope.someTicket': 'görev',
+  'inbox.onlyThisList': 'Yalnızca “{name}” listesini göster',
+  'inbox.onlyThisTicket': 'Yalnızca bu görevi göster',
+
+  // Row actions
+  'inbox.markUnread': 'Okunmadı olarak işaretle',
+  'inbox.follow': 'Bu görevi yeniden takip et',
+  'inbox.unfollow': 'Bu görevin bildirimlerini kapat',
+  // The status chip sits between these two halves.
+  'inbox.statusBefore': 'durumu ',
+  'inbox.statusAfter': ' yaptı',
+
+  // "What changed" panel
+  'inbox.ticket': 'Görev',
+  'inbox.openTicket': 'Görevi aç',
+  'inbox.updates': '{n} güncelleme',
+  'inbox.commentWord': 'yorum',
+  'inbox.noChanges': 'Değişiklikler görevin geçmişinde.',
+  'inbox.diff.status': 'Durum değişikliği',
+  'inbox.diff.noPrevStatus': 'Önceki durum yok',
+  'inbox.diff.comment': 'Yorum',
+  'inbox.diff.subtask': 'Eklenen alt görev',
+  'inbox.diff.file': 'Eklenen dosya',
+  'inbox.diff.assigned': 'Atama',
+  'inbox.diff.assignedBody': 'Bu görev sana atandı.',
+
+  // Toasts and system notifications
+  'inbox.notify.assigned': 'Sana bir görev atandı',
+  'inbox.notify.comment': 'Yeni yorum',
+  'inbox.notify.status': 'Durum değişti',
+  'inbox.notify.subtask': 'Yeni alt görev',
+  'inbox.notify.file': 'Yeni dosya',
+  'inbox.notify.mention': 'Senden bahsedildi',
+  'inbox.notify.reminder': 'Hatırlatma',
+  'inbox.notify.moreCollapsed': '{n} bildirim daha — ayrıntılar uygulamada.',
+  'inbox.notify.changes': '{n} değişiklik',
+  'inbox.verb.assigned': 'seni atadı',
+  'inbox.verb.comment': 'yorum yazdı: “{v}”',
+  'inbox.verb.status': 'durumu {v} yaptı',
+  'inbox.verb.subtask': 'alt görev ekledi: {v}',
+  'inbox.verb.file': 'dosya ekledi: {v}',
+  'inbox.verb.mention': 'senden bahsetti: “{v}”',
+  'inbox.verb.reminder': 'Son tarih yaklaşıyor: {v}',
+  /** Stands in for an image when Markdown is flattened to one line. */
+  'inbox.image': '[görsel]',
+
+  // Notification preferences (channel × event grid)
+  'inbox.channel.inApp': 'Uygulama içi',
+  'inbox.channel.inApp.short': 'Uygulama',
+  'inbox.channel.browser': 'Tarayıcı bildirimi',
+  'inbox.channel.browser.short': 'Tarayıcı',
+  'inbox.event.assigned.label': 'Bana görev atandığında',
+  'inbox.event.assigned.hint': 'Biri seni bir göreve eklediğinde',
+  'inbox.event.comment.label': 'Görevlerime yorum yapıldığında',
+  'inbox.event.comment.hint': 'Atandığın ya da oluşturduğun görevlere gelen yorumlar',
+  'inbox.event.status.label': 'Görevlerimin durumu değiştiğinde',
+  'inbox.event.status.hint': 'Sütun/durum değişiklikleri',
+  'inbox.event.subtask.label': 'Görevlerime alt görev eklendiğinde',
+  'inbox.event.subtask.hint': 'Yeni alt görevler',
+  'inbox.event.file.label': 'Görevlerime dosya eklendiğinde',
+  'inbox.event.file.hint': 'Yeni ekler',
+  'inbox.event.mention.label': 'Benden bahsedildiğinde',
+  'inbox.event.mention.hint': 'Bir yorumda ya da açıklamada @ ile adın geçtiğinde — atanmış olmasan da',
+  'inbox.event.reminder.label': 'Hatırlatma zamanı geldiğinde',
+  'inbox.event.reminder.hint': 'Tekrarlayan görevde ayarladığın süre kadar önce',
+  'inbox.markReadOne': 'Okundu say',
+  'inbox.rowMenu': 'Bu satır için işlemler',
+  'inbox.invite.text': 'seni {team} takımına davet etti',
+  'inbox.invite.accept': 'Kabul et',
+  'inbox.invite.decline': 'Reddet',
+  'inbox.invite.role': 'Rol: {role}',
+  'inbox.joined.text': '{team} takımına katıldı',
+  'inbox.release.text': 'güncellendi: v{version}',
+  'inbox.release.hint': 'Yenilikleri görmek için aç',
+  'inbox.release.heading': 'Yenilikler',
+  'inbox.release.title': 'Fira v{version}',
+  'inbox.release.range': 'v{from} sürümünden beri {n} sürüm',
+  'inbox.release.none': 'Bu sürüm için not yok',
+  'inbox.release.more': 've {n} sürüm daha',
+  'inbox.release.all': 'Tüm sürüm notları',
+} as const
+
+export type InboxDict = typeof inbox

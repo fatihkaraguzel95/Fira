@@ -1,68 +1,83 @@
-<<<<<<< HEAD
 # Fira — Ticket Yönetim Sistemi
 
-Jira/Linear benzeri, Supabase destekli modern bir ticket yönetim sistemi.
+Jira/Linear benzeri, Supabase destekli ticket yönetim sistemi.
 
 ## Kurulum
 
-### 1. Bağımlılıkları Yükle
+### 1. Bağımlılıkları yükle
 
 ```bash
-npm install
+npm ci
 ```
 
-### 2. Supabase Projesi Oluştur
+### 2. Supabase projesi
 
-[app.supabase.com](https://app.supabase.com) adresinde yeni bir proje oluşturun.
+[app.supabase.com](https://app.supabase.com) üzerinde bir proje açın (ya da self-hosted bir
+Supabase kullanın).
 
-### 3. `.env` Dosyasını Düzenle
+### 3. `.env` dosyası
 
 ```env
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 ```
 
-### 4. SQL Migration'larını Çalıştır
+`VITE_SUPABASE_URL` göreli de olabilir (`/api`): aynı origin altında duran self-hosted
+Supabase için çalışma anında sayfanın origin'i ile birleştirilir (`src/lib/supabase.ts`).
 
-Supabase Dashboard → SQL Editor'da aşağıdaki dosyaları sırasıyla çalıştırın:
+### 4. SQL migration'larını çalıştır
 
-```
-src/supabase/migrations/001_enums.sql
-src/supabase/migrations/002_profiles.sql
-src/supabase/migrations/003_tickets.sql
-src/supabase/migrations/004_ticket_attachments.sql
-src/supabase/migrations/005_ticket_comments.sql
-src/supabase/migrations/006_rls.sql
-src/supabase/migrations/007_storage.sql
-src/supabase/migrations/008_updated_at_trigger.sql
-```
-
-### 5. Geliştirme Sunucusunu Başlat
+Şema `supabase/migrations/` altında, numara sırasıyla uygulanır (001 → 115).
+Supabase CLI ile:
 
 ```bash
-npm run dev
+supabase login
+supabase link --project-ref <proje-ref>
+supabase db push
+```
+
+ya da Supabase Dashboard → SQL Editor'da dosyaları **numara sırasıyla** çalıştırın.
+Sıra atlanamaz; her dosya kendinden öncekilerin şemasını varsayar.
+
+### 5. Geliştirme sunucusu
+
+```bash
+npm run dev     # http://localhost:5173
+npm test        # vitest
+npm run build   # dist/
 ```
 
 ## Özellikler
 
-- **Kanban Board** — Sütunlar arası drag-and-drop (dnd-kit)
-- **Liste Görünümü** — Filtrelenebilir tablo
-- **Ticket Detay Modalı** — URL tabanlı (`/ticket/:id`), inline edit
-- **Kişi Atama** — Profiles tablosundan kullanıcı seçimi
-- **Dosya/Resim Yükleme** — Supabase Storage
-- **Yorumlar** — Ticket başına yorum akışı
-- **Auth** — Supabase Email/Şifre
-- **RLS** — Satır düzeyinde güvenlik politikaları
+- **Kanban panosu** — sütunlar arası drag-and-drop (dnd-kit)
+- **Liste görünümü** — gruplama, sıralama, sütun seçimi, satır içi düzenleme, toplu işlem, kayıtlı görünümler
+- **Görev penceresi** — URL tabanlı (`/ticket/:id`), alt görevler, yapılacaklar, bağlı görevler, ekler
+- **Sayfalar** — markdown sayfa ağacı, sürüm geçmişi, çöp kutusu
+- **Tuval** — çizim ve whiteboard (beta)
+- **Komut paleti** — `⌘K` / `Ctrl+K`, bulanık arama ve komutlar
+- **Gelen kutusu** — bildirimler, etkinlik akışı, sürüm notları
+- **İçe aktarma** — OneNote, Excel/CSV, MS Planner
+- **Yedek ve taşıma** — ZIP/CSV dışa ve içe aktarma
+- **Yönetim** (`/admin`) — sunucu durumu, ağ & istekler, duyuru/bakım
+- **Telegram botu** — `services/fira-bot` (telefondan görev açma, görev sorgulama)
+- **PWA** — yüklenebilir, bekleyen sürüm kendiliğinden uygulanır
+- **Çok dillilik** — tr (kaynak), en, de
+- **Tema** — açık / koyu / otomatik + renk paletleri
+- **Auth + RLS** — Supabase e-posta/şifre, satır düzeyinde güvenlik
 
-## Tech Stack
+## Tech stack
 
-- React 18 + TypeScript + Vite
-- Tailwind CSS
-- Supabase (Auth + DB + Storage)
-- @dnd-kit (drag-and-drop)
-- TanStack Query v5
-- React Router v6
-=======
-# Fira
-Ticket Sistemi
->>>>>>> 5423822678c9334b709d5c8d1da86180711ea8c0
+- React 19 + TypeScript + Vite 5
+- Tailwind CSS 3 (tema tokenları `src/index.css`)
+- Supabase (Auth + PostgREST + Storage + Realtime)
+- TanStack Query v5, React Router v7
+- @dnd-kit, tiptap 3, Excalidraw
+- Vitest + happy-dom
+
+## Daha fazlası
+
+- `CLAUDE.md` — proje kuralları ve mimari kararların özeti
+- `DEVELOPMENT_LOG.md` — teknik günlük
+- `docs/teknik-dokuman.md` — teknik mimari
+- `docs/kullanici-kilavuzu.md` — kullanıcı kılavuzu
+- `docs/backup-and-migration.md` — yedek ve taşıma

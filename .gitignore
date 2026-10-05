@@ -2,3 +2,12 @@
 .env*.local
 node_modules
 dist
+
+# secrets & build output
+.env
+.claude/settings.local.json
+fira-ca.crt
+
+# build artefacts of tools
+tools/onenote-converter/target/
+tools/**/node_modules/

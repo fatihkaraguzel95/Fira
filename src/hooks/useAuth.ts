@@ -3,15 +3,42 @@ import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { queryClient } from '../lib/queryClient'
 
+/**
+ * İlk oturum okuması bu kadar sürerse "takıldı" sayılır (#b9e1bb66). Ofis ağına
+ * bağlı değilken istek düşmüyor, zaman aşımını bekliyor: `getSession()` kayıtlı
+ * belirteci yenilemeye çalışıp dakikalarca dönüyor ve ekranda yalnız bir tekerlek
+ * kalıyordu. Süre dolunca kontrol geri alınır, ekran ne olduğunu söyler.
+ */
+const BOOT_TIMEOUT_MS = 6000
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  /** İlk okuma zaman aşımına uğradı ve hâlâ oturum yok. */
+  const [stuck, setStuck] = useState(false)
 
   useEffect(() => {
+    let settled = false
+    const apply = (s: Session | null) => {
+      settled = true
+      setStuck(false)
+      setSession(s)
+      setUser(s?.user ?? null)
+      setLoading(false)
+    }
+    const timer = window.setTimeout(() => {
+      if (settled) return
+      setStuck(true)
+      setLoading(false)
+    }, BOOT_TIMEOUT_MS)
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      window.clearTimeout(timer)
+      apply(session)
+    }, () => {
+      window.clearTimeout(timer)
+      setStuck(true)
       setLoading(false)
     })
 
@@ -19,12 +46,11 @@ export function useAuth() {
       if (event === 'SIGNED_OUT') {
         queryClient.clear()
       }
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+      window.clearTimeout(timer)
+      apply(session)
     })
 
-    return () => subscription.unsubscribe()
+    return () => { window.clearTimeout(timer); subscription.unsubscribe() }
   }, [])
 
   const signIn = async (email: string, password: string) => {
@@ -49,5 +75,5 @@ export function useAuth() {
     if (error) throw error
   }
 
-  return { session, user, loading, signIn, signUp, signOut }
+  return { session, user, loading, stuck, signIn, signUp, signOut }
 }
