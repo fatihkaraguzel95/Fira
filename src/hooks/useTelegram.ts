@@ -2,14 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 
 /**
- * Telegram is the only notification channel that reaches a phone: Fira sits
- * behind the VPN, so neither the app nor the VPN client can be installed there.
- *
  * The browser never talks to Telegram — the bot token lives on the server. All
  * the app does is manage the link (a one-time code the user hands to the bot)
  * and queue the odd test message.
+ *
+ * The bot's username comes from the environment, not from here: it is the one
+ * piece of this that differs per deployment, and a wrong value is silent —
+ * "Telegram'da aç" would open somebody else's bot, where the code means nothing
+ * and the person is simply told to pair. Unset, the link is hidden rather than
+ * pointed somewhere wrong (see TelegramSettings).
  */
-export const TELEGRAM_BOT_USERNAME = 'flpFiraBot'
+export const TELEGRAM_BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined)?.replace(/^@/, '') ?? ''
 
 export interface TelegramAccount {
   user_id: string
@@ -63,4 +66,4 @@ export function useTelegramTest() {
   })
 }
 
-export const telegramStartUrl = (code: string) => `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}`
+export const telegramStartUrl = (code: string) => (TELEGRAM_BOT_USERNAME ? `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}` : '')

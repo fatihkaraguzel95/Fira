@@ -76,12 +76,14 @@ export function TelegramSettings({ enabled, onEnabledChange, onLinkedChange }: {
               >
                 {copied ? t('common.copied') : t('common.copy')}
               </button>
-              <a className={button} href={telegramStartUrl(code)} target="_blank" rel="noopener noreferrer">
-                {t('settings.telegram.openInTelegram')}
-              </a>
+              {TELEGRAM_BOT_USERNAME && (
+                <a className={button} href={telegramStartUrl(code)} target="_blank" rel="noopener noreferrer">
+                  {t('settings.telegram.openInTelegram')}
+                </a>
+              )}
             </div>
             <p className="text-xs text-fg-muted">
-              {t('settings.telegram.step1')}<span className="font-medium text-fg-2">@{TELEGRAM_BOT_USERNAME}</span>{t('settings.telegram.step2')}
+              {t('settings.telegram.step1')}<span className="font-medium text-fg-2">{TELEGRAM_BOT_USERNAME ? `@${TELEGRAM_BOT_USERNAME}` : '…'}</span>{t('settings.telegram.step2')}
               <code className="mx-1 px-1 rounded-md bg-field border border-line">/start {code}</code>{t('settings.telegram.step3')}
             </p>
           </div>
