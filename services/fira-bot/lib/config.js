@@ -66,10 +66,18 @@ export const config = {
   aiModel: get('AI_MODEL', 'nvidia/nemotron-3-ultra-550b-a55b'),
 
   // ── Görevlerin açılacağı yer ─────────────────────────────────────────────
-  // İsimle çözülür: ilk eşleşen proje kullanılır. Kullanıcı /hedef ile değiştirince
-  // seçimi telegram_accounts'a yazılır ve buradaki isimlere bir daha bakılmaz.
+  // Liste (proje) isimle çözülür: ilk eşleşen kullanılır. Kullanıcı /hedef ile
+  // değiştirince seçim telegram_accounts'a yazılır ve buradaki isimlere bir daha
+  // bakılmaz.
   targetProjects: get('FIRA_PROJECT', 'Uygulama hata analizi,SportIQ').split(',').map((s) => s.trim()).filter(Boolean),
-  targetStatus: get('FIRA_STATUS', 'Beklemede'),
+
+  // Durum sorulmaz. Telegram'dan açılan her görev listenin "yapılacaklar"
+  // durumuna düşer: yeni iş oraya girer, oradan panoda ilerler. Kurulumlar
+  // sütunu farklı adlandırdığı için ad yerine bir takım eşanlamlı denenir ve
+  // hiçbiri tutmazsa `backlog` kategorisindeki sütuna düşülür (bkz.
+  // data.js → standardColumn).
+  targetStatus: get('FIRA_STATUS', 'Yapılacaklar'),
+  targetStatusAliases: ['yapılacaklar', 'yapılacak', 'yapilacaklar', 'yapilacak', 'to do', 'todo', 'backlog'],
 }
 
 export function assertConfig() {

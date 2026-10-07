@@ -40,7 +40,7 @@ const helpText = () => [
     : ['Düz mesaj yazarsan bunu görev yapmak isteyip istemediğini sorarım.']),
   '/yeni — adım adım görev aç (yapay zekâsız)',
   '/yeni Yazıcı bozuk — başlığı hemen vererek aç',
-  '/hedef — görevlerin açılacağı proje ve sütun',
+  '/hedef — görevlerin açılacağı liste (sütun hep “yapılacaklar”)',
   '/bana — bana atanmış açık görevler',
   '/bugun — bugünün ve geciken işlerim',
   '/gorev 118F5C — görev kartı (karttaki kısa kimlik)',
@@ -97,18 +97,20 @@ export async function handleMessage(msg) {
     return chat.summarize(chatId, account)
   }
 
+  // Yalnız liste sorulur. Sütun seçimi yok: görev her zaman listenin standart
+  // ("yapılacaklar") sütununa açılır — bkz. data.js → standardColumn.
   if (command === '/hedef') {
     const target = await db.resolveTarget(account.user_id, account)
     const projects = await db.listProjects(account.user_id)
-    if (!projects?.length) return sendMessage(chatId, 'Hiç projen yok görünüyor.')
+    if (!projects?.length) return sendMessage(chatId, 'Hiç listen yok görünüyor.')
     const head = target.project
       ? `Görevler şu an <b>${esc(target.project.name)}</b>${target.status ? ` → <b>${esc(target.status.name)}</b>` : ''} altına açılıyor.`
-      : 'Hedef proje seçilmemiş.'
+      : 'Hedef liste seçilmemiş.'
     const buttons = projects.map((p) => ({
       text: p.id === target.project?.id ? `✓ ${p.name}` : p.name,
       callback_data: `tp|${ref(p.id)}`,
     }))
-    return sendMessage(chatId, `${head}\n\nProjeyi seç:`, {
+    return sendMessage(chatId, `${head}\n\nListeyi seç:`, {
       reply_markup: keyboard(buttons, projects.length > 6 ? 2 : 1),
     })
   }
@@ -193,33 +195,20 @@ export async function handleCallback(query) {
     return answerCallback(query.id, toast ?? '')
   }
 
-  // /hedef: proje seçildi → o projenin sütunlarını sor.
+  // /hedef: liste seçildi. Sütun sorulmaz — standart sütun burada çözülüp
+  // yalnızca gösterilir, böylece kullanıcı görevin tam olarak nereye düşeceğini
+  // görür ama her seferinde bir soru yemez.
   if (kind === 'tp') {
     const projects = await db.listProjects(account.user_id)
     const project = byRef(projects, a)
-    if (!project) return answerCallback(query.id, 'Proje bulunamadı.', true)
-    const columns = await db.statuses(account.user_id, project.id)
-    if (!columns?.length) return answerCallback(query.id, 'Bu projede sütun yok.', true)
-    await db.setTarget(account.user_id, project.id, null)
-    await editMessageText(chatId, messageId, `📁 <b>${esc(project.name)}</b>
-
-Hangi sütuna açılsın?`, {
-      reply_markup: keyboard(columns.map((c) => ({ text: c.name, callback_data: `ts|${ref(c.id)}` })), 2),
-    })
-    return answerCallback(query.id, project.name)
-  }
-
-  if (kind === 'ts') {
-    const projectId = (await db.accountForChat(chatId))?.default_project_id
-    const columns = projectId ? await db.statuses(account.user_id, projectId) : []
-    const status = byRef(columns, a)
-    if (!status) return answerCallback(query.id, 'Sütun bulunamadı.', true)
-    await db.setTarget(account.user_id, projectId, status.id)
-    const name = await db.projectName(account.user_id, projectId)
-    await editMessageText(chatId, messageId, `🎯 Hedef: <b>${esc(name ?? '')}</b> → <b>${esc(status.name)}</b>
+    if (!project) return answerCallback(query.id, 'Liste bulunamadı.', true)
+    const column = db.standardColumn(await db.statuses(account.user_id, project.id))
+    if (!column) return answerCallback(query.id, 'Bu listede sütun yok.', true)
+    await db.setDefaultProject(account.user_id, project.id)
+    await editMessageText(chatId, messageId, `🎯 Hedef: <b>${esc(project.name)}</b> → <b>${esc(column.name)}</b>
 
 Bundan sonra görevler buraya açılacak.`)
-    return answerCallback(query.id, status.name)
+    return answerCallback(query.id, project.name)
   }
 
   if (kind === 'dp') {

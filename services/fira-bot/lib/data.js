@@ -87,54 +87,87 @@ export const projectName = async (userId, projectId) => {
 export const setDefaultProject = (userId, projectId) =>
   service.update(`telegram_accounts?user_id=eq.${userId}`, { default_project_id: projectId })
 
-export const setTarget = (userId, projectId, statusId) =>
-  service.update(`telegram_accounts?user_id=eq.${userId}`, {
-    default_project_id: projectId,
-    default_status_id: statusId,
-  })
+const fold = (s) => String(s ?? '').toLocaleLowerCase('tr').trim()
 
 /**
- * Where AI-made tickets land.
+ * The one column Telegram tickets go to: "yapılacaklar".
  *
- * A stored choice (set once via /hedef, or on the first created ticket) always
- * wins. Otherwise the configured names are matched against the projects this
- * user can actually see — so the target is discovered rather than hardcoded as
- * an id that would differ per environment.
+ * Deliberately not a question and not a stored per-user choice. Everything
+ * captured from a phone is new work, and new work belongs at the start of the
+ * board — asking "which column?" every time only invites a wrong answer.
+ *
+ * Resolved by name so it survives a renamed column, then by the `backlog`
+ * category (what create_default_statuses gives the first column), and only then
+ * by position.
+ */
+export function standardColumn(columns) {
+  const list = columns ?? []
+  const wanted = fold(config.targetStatus)
+  const aliases = [wanted, ...config.targetStatusAliases.map(fold)].filter(Boolean)
+
+  for (const alias of aliases) {
+    const hit = list.find((c) => fold(c.name) === alias)
+    if (hit) return hit
+  }
+  for (const alias of aliases) {
+    const hit = list.find((c) => fold(c.name).includes(alias))
+    if (hit) return hit
+  }
+  return list.find((c) => c.category === 'backlog') ?? list[0] ?? null
+}
+
+/**
+ * Where tickets land: a list (project) and, inside it, the standard column.
+ *
+ * The stored list (set once via /hedef, or on the first created ticket) wins.
+ * Otherwise the configured names are matched against the lists this user can
+ * actually see — so the target is discovered rather than hardcoded as an id that
+ * would differ per environment. The column is never stored or asked: it is
+ * always standardColumn() of whatever list we end up with.
  */
 export async function resolveTarget(userId, account) {
-  const fold = (s) => String(s ?? '').toLocaleLowerCase('tr').trim()
-
   let project = null
   if (account.default_project_id) {
-    const rows = await asUser(userId).select(`projects?id=eq.${account.default_project_id}&select=id,name`)
-    project = rows?.[0] ?? null
+    project = await projectWithTeam(userId, account.default_project_id)
   }
 
   if (!project) {
     const projects = (await listProjects(userId)) ?? []
+    let found = null
     for (const wanted of config.targetProjects) {
-      project = projects.find((p) => fold(p.name) === fold(wanted))
+      found = projects.find((p) => fold(p.name) === fold(wanted))
         ?? projects.find((p) => fold(p.name).includes(fold(wanted)))
-      if (project) break
+      if (found) break
     }
-    if (!project) return { project: null, status: null, reason: 'proje-yok' }
+    if (!found) return { project: null, status: null, reason: 'proje-yok' }
+    project = (await projectWithTeam(userId, found.id)) ?? found
   }
 
-  const columns = (await statuses(userId, project.id)) ?? []
-  let status = account.default_status_id
-    ? columns.find((c) => c.id === account.default_status_id)
-    : null
-  status ??= columns.find((c) => fold(c.name) === fold(config.targetStatus))
-    ?? columns.find((c) => fold(c.name).includes(fold(config.targetStatus)))
-    ?? columns[0]
-    ?? null
-
+  const status = standardColumn(await statuses(userId, project.id))
   return { project, status, reason: status ? null : 'sutun-yok' }
+}
+
+/**
+ * The list plus its team name. The team is what the person actually thinks in
+ * ("hangi takımın hangi listesi"), so it goes on the confirm card and into the
+ * model's prompt. The embed needs read access to teams; if that query fails for
+ * any reason the plain row is still enough to open a ticket.
+ */
+async function projectWithTeam(userId, projectId) {
+  const db = asUser(userId)
+  try {
+    const rows = await db.select(`projects?id=eq.${projectId}&select=id,name,team:teams(name)`)
+    if (rows?.[0]) return rows[0]
+  } catch {
+    // Takım adı süs: aşağıdaki düz satırla devam.
+  }
+  const rows = await db.select(`projects?id=eq.${projectId}&select=id,name`)
+  return rows?.[0] ?? null
 }
 
 export const statuses = (userId, projectId) =>
   asUser(userId).select(
-    `ticket_statuses?project_id=eq.${projectId}&select=id,name,order_index&order=order_index.asc`,
+    `ticket_statuses?project_id=eq.${projectId}&select=id,name,category,order_index&order=order_index.asc`,
   )
 
 // ── Görev açma ──────────────────────────────────────────────────────────────
@@ -144,22 +177,17 @@ export const statuses = (userId, projectId) =>
  * access to the project's team, so a read-only member simply gets a 403 here
  * instead of the bot having to know the rule.
  *
- * The card lands at the top of the first column — the same place the board puts
- * a ticket whose status just changed, and the right place for something captured
+ * The column is the standard one ("yapılacaklar") unless the caller resolved it
+ * already, and the card lands at the top of it — the same place the board puts a
+ * ticket whose status just changed, and the right place for something captured
  * on a phone: it should be the first thing seen, not buried under a long list.
  */
 export async function createTicket(userId, draft) {
   const db = asUser(userId)
-  let column = null
-  if (draft.status_id) {
-    const columns = await statuses(userId, draft.project_id)
-    column = (columns ?? []).find((c) => c.id === draft.status_id) ?? null
-  }
-  if (!column) {
-    const columns = await statuses(userId, draft.project_id)
-    column = columns?.[0] ?? null
-  }
-  if (!column) throw new Error('Bu projede hiç liste (durum) yok, görev açılamıyor.')
+  const columns = (await statuses(userId, draft.project_id)) ?? []
+  const column = (draft.status_id ? columns.find((c) => c.id === draft.status_id) : null)
+    ?? standardColumn(columns)
+  if (!column) throw new Error('Bu listede hiç durum (sütun) yok, görev açılamıyor.')
 
   const edge = await db.select(
     `tickets?status_id=eq.${column.id}&select=order_index&order=order_index.asc&limit=1`,
