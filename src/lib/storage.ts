@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, SUPABASE_URL } from './supabase'
 
 export const ATTACHMENTS_BUCKET = 'ticket-attachments'
 
@@ -14,12 +14,18 @@ const STORAGE_MARK = '/storage/v1/object/'
  * not. Rendering the same object through the current origin keeps pictures on
  * whichever host the page was loaded from. The stored value is never changed —
  * this is for `src`/`href` at render time only.
+ *
+ * Only re-based when the configured Supabase URL itself resolves to the page
+ * origin (relative '/api' or same-origin absolute, i.e. a proxy serves
+ * /storage). With an external Supabase URL (e.g. Vercel + cloud) the page
+ * origin has no /storage route, so the URL is returned untouched.
  */
 export function displayUrl<T extends string | null | undefined>(url: T): T {
   if (!url || typeof window === 'undefined') return url
   const at = url.indexOf(STORAGE_MARK)
   if (at < 0 || !/^https?:\/\//i.test(url)) return url
   try {
+    if (new URL(SUPABASE_URL, window.location.origin).origin !== window.location.origin) return url
     const u = new URL(url)
     if (u.origin === window.location.origin) return url
     return (window.location.origin + u.pathname + u.search + u.hash) as T
